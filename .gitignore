@@ -141,3 +141,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Next.js auto-generated (regenerated on every build/dev run)
+next-env.d.ts
