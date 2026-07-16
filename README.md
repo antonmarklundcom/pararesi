@@ -16,7 +16,8 @@ record). Deployed to **Hostinger managed Node.js** with **Hostinger MySQL**.
 | [docs/02-architecture.md](docs/02-architecture.md) | Full technical architecture: routes, DB schema, auth, tier gating, Lemon Squeezy integration, email, SEO |
 | [docs/03-build-guide.md](docs/03-build-guide.md) | Phase-by-phase build instructions with ready-to-paste kickoff prompts for the builder model |
 | [docs/04-launch-checklist.md](docs/04-launch-checklist.md) | Deploy runbook (Hostinger) and go-live checklist |
-| [docs/05-open-questions.md](docs/05-open-questions.md) | Lemon Squeezy product-structure decisions with recommended defaults — resolve before Phase 3 |
+| [docs/05-open-questions.md](docs/05-open-questions.md) | Lemon Squeezy product-structure decisions — **resolved 2026-07-16** (guide one-time price still TBD) |
+| [docs/06-fable5-review-notes.md](docs/06-fable5-review-notes.md) | Fable 5 review pass: corrections builder sessions must apply (webhook semantics, refunds, idempotency, checkout↔user linking) |
 
 ## Stack (fixed — do not renegotiate)
 
