@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { logoutAction } from "@/lib/logout-action";
 
 const links = [
   { href: "/portal", label: "Dashboard" },
@@ -20,6 +21,14 @@ export function PortalNav() {
           {link.label}
         </Link>
       ))}
+      <form action={logoutAction}>
+        <button
+          type="submit"
+          className="w-full rounded-lg px-3 py-2 text-left text-sm text-brand-navy-900/70 hover:bg-brand-green-50 hover:text-brand-navy-900"
+        >
+          Log out
+        </button>
+      </form>
     </nav>
   );
 }

@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { requireAdmin } from "@/lib/auth";
+import { logoutAction } from "@/lib/logout-action";
 
 const links = [
   { href: "/admin/modules", label: "Modules & Lessons" },
@@ -9,8 +11,9 @@ const links = [
   { href: "/admin/users", label: "Users" },
 ];
 
-// requireAdmin() gate lands in Phase 2.
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  await requireAdmin();
+
   return (
     <div className="flex min-h-full flex-1">
       <aside className="hidden w-60 shrink-0 border-r border-brand-navy-900/10 p-6 md:block">
@@ -27,6 +30,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               {link.label}
             </Link>
           ))}
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="w-full rounded-lg px-3 py-2 text-left text-sm text-brand-navy-900/70 hover:bg-brand-green-50 hover:text-brand-navy-900"
+            >
+              Log out
+            </button>
+          </form>
         </nav>
       </aside>
       <main className="flex-1 p-8">{children}</main>

@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { requireUser } from "@/lib/auth";
 import { PortalNav } from "@/components/portal/PortalNav";
 
-// requireUser() gate lands in Phase 2; middleware.ts is UX-only per docs/02-architecture.md §3.
-export default function PortalLayout({ children }: { children: ReactNode }) {
+export default async function PortalLayout({ children }: { children: ReactNode }) {
+  await requireUser();
+
   return (
     <div className="flex min-h-full flex-1">
       <aside className="hidden w-60 shrink-0 border-r border-brand-navy-900/10 p-6 md:block">
