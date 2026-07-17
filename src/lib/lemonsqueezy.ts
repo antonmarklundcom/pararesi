@@ -82,3 +82,34 @@ export async function createCheckoutUrl({ productKey, email }: CreateCheckoutArg
   }
   return url;
 }
+
+/**
+ * Fetches a fresh customer-portal URL for a subscription. Lemon Squeezy
+ * pre-signs this URL and it expires 24h after the request, so it must be
+ * fetched on demand — never stored from an old webhook payload.
+ */
+export async function getCustomerPortalUrl(lsSubscriptionId: string): Promise<string> {
+  const apiKey = process.env.LEMONSQUEEZY_API_KEY;
+  if (!apiKey) {
+    throw new Error("LEMONSQUEEZY_API_KEY must be set.");
+  }
+
+  const res = await fetch(`https://api.lemonsqueezy.com/v1/subscriptions/${lsSubscriptionId}`, {
+    headers: {
+      Accept: "application/vnd.api+json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Lemon Squeezy subscription fetch failed (${res.status}): ${body}`);
+  }
+
+  const json = await res.json();
+  const url = json?.data?.attributes?.urls?.customer_portal;
+  if (typeof url !== "string") {
+    throw new Error("Lemon Squeezy response did not include a customer_portal url.");
+  }
+  return url;
+}
