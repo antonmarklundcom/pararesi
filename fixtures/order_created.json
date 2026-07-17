@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "event_name": "order_created",
+    "custom_data": { "productKey": "guide" }
+  },
+  "data": {
+    "type": "orders",
+    "id": "1001",
+    "attributes": {
+      "store_id": 1,
+      "customer_id": 5001,
+      "user_name": "Jane Buyer",
+      "user_email": "jane.buyer@example.com",
+      "currency": "USD",
+      "status": "paid",
+      "total": 1900,
+      "total_formatted": "$19.00",
+      "first_order_item": {
+        "product_id": 9001,
+        "variant_id": 9101,
+        "product_name": "Paraguay Residency Guide",
+        "variant_name": "Guide"
+      },
+      "urls": {
+        "receipt": "https://app.lemonsqueezy.com/my-orders/example-receipt"
+      },
+      "created_at": "2026-07-17T00:00:00.000000Z"
+    }
+  }
+}

@@ -7,7 +7,7 @@ import { getSession } from "./session";
 export type Tier = "none" | "guide" | "insider";
 export type UserRow = typeof users.$inferSelect;
 
-const TIER_RANK: Record<Tier, number> = { none: 0, guide: 1, insider: 2 };
+export const TIER_RANK: Record<Tier, number> = { none: 0, guide: 1, insider: 2 };
 
 export async function getCurrentUser(): Promise<UserRow | null> {
   const session = await getSession();
