@@ -86,8 +86,11 @@ async function handleEvent(eventName: string, payload: LemonSqueezyPayload) {
       return handleOrderRefunded(payload);
     case "subscription_created":
     case "subscription_payment_success":
+    case "subscription_resumed":
+    case "subscription_unpaused":
       return handleSubscriptionActive(payload);
     case "subscription_cancelled":
+      return handleSubscriptionCancelled(payload);
     case "subscription_expired":
       return handleSubscriptionEnded(payload);
     // Other event types (subscription_updated, subscription_paused, license_key_*,
@@ -106,6 +109,21 @@ async function findOrCreateUser(rawEmail: string, name: string | null) {
     .$returningId();
   const [created] = await db.select().from(users).where(eq(users.id, inserted.id));
   return { user: created!, isNew: true };
+}
+
+/**
+ * Prefers the logged-in buyer's userId (passed through checkout_data.custom)
+ * over email matching, so a member who types a different email at Lemon
+ * Squeezy checkout still gets their existing account upgraded instead of a
+ * new orphan account being created for that email.
+ */
+async function resolveUser(payload: LemonSqueezyPayload, email: string, name: string | null) {
+  const customUserId = payload.meta.custom_data?.userId;
+  if (customUserId) {
+    const [existing] = await db.select().from(users).where(eq(users.id, Number(customUserId)));
+    if (existing) return { user: existing, isNew: false };
+  }
+  return findOrCreateUser(email, name);
 }
 
 async function grantAtLeastTier(userId: number, currentTier: string, minTier: Tier) {
@@ -134,7 +152,7 @@ async function handleOrderCreated(payload: LemonSqueezyPayload) {
   const email = attrs.user_email;
   const name = attrs.user_name ?? null;
 
-  const { user, isNew } = await findOrCreateUser(email, name);
+  const { user, isNew } = await resolveUser(payload, email, name);
 
   if (attrs.customer_id) {
     await db.update(users).set({ lsCustomerId: String(attrs.customer_id) }).where(eq(users.id, user.id));
@@ -208,7 +226,7 @@ async function handleSubscriptionActive(payload: LemonSqueezyPayload) {
   const email = attrs.user_email;
   const name = attrs.user_name ?? null;
 
-  const { user, isNew } = await findOrCreateUser(email, name);
+  const { user, isNew } = await resolveUser(payload, email, name);
 
   if (attrs.customer_id) {
     await db.update(users).set({ lsCustomerId: String(attrs.customer_id) }).where(eq(users.id, user.id));
@@ -243,6 +261,40 @@ async function handleSubscriptionActive(payload: LemonSqueezyPayload) {
 
   if (isNew) {
     await sendWelcomeEmail(user.id, email, name);
+  }
+}
+
+/**
+ * subscription_cancelled means the member cancelled but stays paid-up until
+ * the current period ends — it is NOT the downgrade event. Downgrading here
+ * would strip access the member already paid for. We just push tierExpiresAt
+ * out to ends_at (+ grace) so effectiveTier's read-time check naturally
+ * downgrades once the paid period is actually over. subscription_expired is
+ * the real terminal event (handleSubscriptionEnded).
+ */
+async function handleSubscriptionCancelled(payload: LemonSqueezyPayload) {
+  const attrs = payload.data.attributes as {
+    status: string;
+    ends_at: string | null;
+    renews_at: string | null;
+  };
+  const subscriptionId = payload.data.id;
+
+  const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.lsSubscriptionId, subscriptionId));
+  if (!sub) return;
+
+  const endsAt = attrs.ends_at ? new Date(attrs.ends_at) : null;
+  const renewsAt = attrs.renews_at ? new Date(attrs.renews_at) : null;
+
+  await db
+    .update(subscriptions)
+    .set({ status: attrs.status, endsAt, raw: payload })
+    .where(eq(subscriptions.id, sub.id));
+
+  const paidThrough = endsAt ?? renewsAt;
+  if (paidThrough) {
+    const tierExpiresAt = new Date(paidThrough.getTime() + TIER_GRACE_DAYS * 24 * 60 * 60 * 1000);
+    await db.update(users).set({ tierExpiresAt }).where(eq(users.id, sub.userId));
   }
 }
 

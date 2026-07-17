@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SetPasswordForm } from "./SetPasswordForm";
 
 export const metadata: Metadata = {
@@ -17,7 +18,11 @@ export default async function SetPasswordPage({
       <div>
         <h1 className="text-lg font-semibold text-brand-navy-950">Set your password</h1>
         <p className="mt-2 text-sm text-brand-navy-900/60">
-          This link is missing its token. Check the email from your purchase, or contact support.
+          This link is missing its token. If your purchase link expired, use{" "}
+          <Link href="/forgot-password" className="text-brand-green-600 hover:underline">
+            forgot password
+          </Link>{" "}
+          with the email you purchased with — it works the same way for a first-time password.
         </p>
       </div>
     );

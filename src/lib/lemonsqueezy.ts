@@ -33,10 +33,13 @@ export function productKeyForVariantId(variantId: string | number): ProductKey |
 interface CreateCheckoutArgs {
   productKey: ProductKey;
   email?: string;
+  /** The logged-in buyer's user id, if any — see resolveUser() in the webhook
+   * route for why this takes priority over email matching. */
+  userId?: number;
 }
 
 /** Creates a Lemon Squeezy hosted checkout and returns its URL. Server-only. */
-export async function createCheckoutUrl({ productKey, email }: CreateCheckoutArgs): Promise<string> {
+export async function createCheckoutUrl({ productKey, email, userId }: CreateCheckoutArgs): Promise<string> {
   const apiKey = process.env.LEMONSQUEEZY_API_KEY;
   const storeId = process.env.LEMONSQUEEZY_STORE_ID;
   if (!apiKey || !storeId) {
@@ -58,8 +61,8 @@ export async function createCheckoutUrl({ productKey, email }: CreateCheckoutArg
         attributes: {
           checkout_data: {
             email,
-            // Echoed back as meta.custom_data.productKey on every order/subscription webhook.
-            custom: { productKey },
+            // Echoed back as meta.custom_data on every order/subscription webhook.
+            custom: userId ? { productKey, userId: String(userId) } : { productKey },
           },
         },
         relationships: {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { setPasswordAction } from "./actions";
 import { Button } from "@/components/ui/Button";
 
@@ -38,7 +39,15 @@ export function SetPasswordForm({ token }: { token: string }) {
           className="mt-1 w-full rounded-lg border border-brand-navy-900/20 px-3 py-2 text-sm focus:border-brand-green-600 focus:outline-none"
         />
       </div>
-      {state?.error ? <p className="text-sm text-red-600">{state.error}</p> : null}
+      {state?.error ? (
+        <p className="text-sm text-red-600">
+          {state.error}{" "}
+          <Link href="/forgot-password" className="underline hover:no-underline">
+            Get a new link
+          </Link>
+          .
+        </p>
+      ) : null}
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Saving..." : "Set password & continue"}
       </Button>

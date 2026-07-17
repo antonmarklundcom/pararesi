@@ -14,6 +14,8 @@ it just has to match what the script below signs with).
 ./fixtures/send.sh subscription_created
 ./fixtures/send.sh subscription_payment_success
 ./fixtures/send.sh subscription_cancelled
+./fixtures/send.sh subscription_resumed
+./fixtures/send.sh subscription_unpaused
 ./fixtures/send.sh subscription_expired
 ./fixtures/send.sh order_refunded
 ```
@@ -32,10 +34,17 @@ call should return `{"ok":true,"duplicate":true}` and the row counts in
    with `tierExpiresAt` = `renews_at` + 3 days.
 3. `subscription_payment_success` — renews the same subscription, pushes
    `tierExpiresAt` forward.
-4. `subscription_cancelled` or `subscription_expired` — downgrades that user:
+4. `subscription_cancelled` — **does not downgrade** (doc 06 R1): status
+   updates, `tierExpiresAt` moves to `ends_at` + 3 days, `tier` stays
+   `insider` until that date actually passes (verify by checking the row,
+   not by expecting an immediate tier change).
+5. `subscription_resumed` / `subscription_unpaused` — restores `active` status
+   and re-extends `tierExpiresAt` from `renews_at`, as if the cancellation
+   never happened.
+6. `subscription_expired` — the real terminal event: downgrades that user to
    `guide` if they also have a guide purchase, else `none`.
-5. `order_refunded` — marks the `jane.buyer@example.com` purchase refunded and,
-   since she has no active subscription, drops her back to `tier=none`.
+7. `order_refunded` — marks the `jane.buyer@example.com` purchase refunded
+   and, since she has no active subscription, drops her back to `tier=none`.
 
 Check results with:
 

@@ -6,6 +6,6 @@ import { createCheckoutUrl, type ProductKey } from "./lemonsqueezy";
 
 export async function createCheckoutAction(productKey: ProductKey) {
   const user = await getCurrentUser();
-  const url = await createCheckoutUrl({ productKey, email: user?.email });
+  const url = await createCheckoutUrl({ productKey, email: user?.email, userId: user?.id });
   redirect(url);
 }
