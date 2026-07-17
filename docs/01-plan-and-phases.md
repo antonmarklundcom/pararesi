@@ -1,5 +1,12 @@
 # 01 — Master Plan & Build Phases
 
+> **Authored by Fable 5** (planning/architecture model) for handoff to
+> **Sonnet 5 / Opus 4.8** builder sessions. Fable 5 owns architecture, spec/schema
+> decisions, gap analysis, and review gates; Sonnet 5 handles most build phases and
+> Opus 4.8 the money/security-critical ones — don't burn Fable time on routine
+> implementation. Reviewed and re-confirmed by Fable 5 on 2026-07-16
+> (see docs/06-fable5-review-notes.md for corrections builders must apply).
+
 **Goal:** launch a sellable product with the minimum human input, front-loading all code
 that can be written before any external account/credential/content exists.
 
