@@ -9,6 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
   title: {
     default: "Paraguay Residency Guide",
     template: "%s | Paraguay Residency Guide",
