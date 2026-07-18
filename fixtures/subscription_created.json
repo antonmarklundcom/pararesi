@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "event_name": "subscription_created",
+    "custom_data": { "productKey": "insider-monthly" }
+  },
+  "data": {
+    "type": "subscriptions",
+    "id": "2001",
+    "attributes": {
+      "store_id": 1,
+      "customer_id": 5002,
+      "order_id": 1002,
+      "order_item_id": 1,
+      "product_id": 9002,
+      "variant_id": 9201,
+      "product_name": "Residency Insider",
+      "variant_name": "Monthly",
+      "user_name": "Sam Insider",
+      "user_email": "sam.insider@example.com",
+      "status": "active",
+      "renews_at": "2026-08-17T00:00:00.000000Z",
+      "ends_at": null,
+      "created_at": "2026-07-17T00:00:00.000000Z"
+    }
+  }
+}

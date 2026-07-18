@@ -129,8 +129,10 @@ tier check**. Insider content for guide members renders title + teaser + upgrade
 | `guide` | one-time LS purchase | never (tierExpiresAt null) |
 | `insider` | LS subscription (monthly/yearly) | tierExpiresAt = renews_at + 3-day grace, pushed forward on each payment webhook |
 
-Downgrade rule (webhook `subscription_cancelled`/`expired`, and mirrored in
-`effectiveTier`): insider → `guide` if they ever purchased guide, else `none`.
+Downgrade rule (webhook `subscription_expired`, and mirrored in `effectiveTier`):
+insider → `guide` if they ever purchased guide, else `none`. **Not** on
+`subscription_cancelled` — a cancelled subscription stays paid-up until
+`ends_at`/`renews_at`; see doc 06 R1.
 
 ## 5. Lemon Squeezy
 
@@ -139,9 +141,10 @@ Env: `LEMONSQUEEZY_API_KEY`, `LEMONSQUEEZY_STORE_ID`, `LEMONSQUEEZY_WEBHOOK_SECR
 All LS calls server-side only.
 
 **Checkout:** server action `createCheckout(productKey)` → POST /v1/checkouts with
-`checkout_data.custom = { productKey }` and email prefill when logged in → redirect
-to the returned hosted-checkout URL. Buy buttons: /guide, /pricing, locked-content
-CTAs.
+`checkout_data.custom = { productKey, userId? }` (userId included when the buyer is
+logged in — see doc 06 R4 on why email alone isn't enough) and email prefill when
+logged in → redirect to the returned hosted-checkout URL. Buy buttons: /guide,
+/pricing, locked-content CTAs.
 
 **Webhook** `/api/webhooks/lemonsqueezy` (Node runtime, `export const dynamic =
 'force-dynamic'`):
@@ -156,9 +159,16 @@ CTAs.
 
 | Event | Action |
 |-------|--------|
-| `order_created` | find-or-create user by email (store lsCustomerId); insert purchase (skip if lsOrderId exists); if productKey=guide and tier=none → tier=guide; if brand-new user → create 'set' token + send welcome/set-password email; else send payment-received email |
-| `subscription_created`, `subscription_payment_success` | upsert subscription row; tier=insider; tierExpiresAt = renews_at + 3 days |
-| `subscription_cancelled`, `subscription_expired` | update subscription status; apply downgrade rule |
+| `order_created` | resolve user by custom_data.userId if present, else find-or-create by email (store lsCustomerId); insert purchase (skip if lsOrderId exists); if productKey=guide and tier<guide → tier=guide; if brand-new user → create 'set' token + send welcome/set-password email; else send payment-received email |
+| `order_refunded` | mark purchase status=refunded; if it was the guide purchase and no active subscription remains → tier=none |
+| `subscription_created`, `subscription_payment_success`, `subscription_resumed`, `subscription_unpaused` | resolve user (as above); upsert subscription row; tier=insider; tierExpiresAt = renews_at + 3 days |
+| `subscription_cancelled` | update subscription status only — **do not downgrade**; set tierExpiresAt = ends_at (fallback renews_at) + 3 days so the member keeps access through the period they already paid for |
+| `subscription_expired` | update subscription status; apply the downgrade rule (the real terminal event) |
+
+Idempotency key: `${event_name}:${data.id}` (Lemon Squeezy doesn't send a separate
+delivery id) — a retried delivery of the same event is a no-op; each distinct event
+type for a resource still gets its own row. Verified in Phase 3 by replaying every
+fixture twice.
 
 Unknown events: store row, mark processed, ignore. `fixtures/` holds one sample
 payload per handled event for local `curl` testing with a dev secret.
@@ -195,7 +205,7 @@ is cheap on a single always-on Node process.
 ## 8. Money-path sequence
 
 ```
-Buyer → /guide → [Buy $17] → server action → LS hosted checkout (card, taxes: LS as MoR)
+Buyer → /guide → [Buy — price TBD, $7–27 range] → server action → LS hosted checkout (card, taxes: LS as MoR)
   → LS webhook order_created → verify HMAC → webhookEvents insert (idempotent)
   → user created (passwordHash null, tier=guide) + purchase row
   → email: "Set your password" → /set-password?token=… → session created

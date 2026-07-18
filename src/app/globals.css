@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f1b16;
+
+  /* Deep green / navy brand palette */
+  --color-brand-green-950: #06120d;
+  --color-brand-green-900: #0a1f16;
+  --color-brand-green-800: #113322;
+  --color-brand-green-700: #17472f;
+  --color-brand-green-600: #1f5c3d;
+  --color-brand-green-500: #2c7a51;
+  --color-brand-green-400: #4a9b70;
+  --color-brand-green-100: #e3f0e8;
+  --color-brand-green-50: #f2f8f4;
+
+  --color-brand-navy-950: #060b17;
+  --color-brand-navy-900: #0b1730;
+  --color-brand-navy-800: #122349;
+  --color-brand-navy-700: #1a3266;
+  --color-brand-navy-600: #234384;
+  --color-brand-navy-500: #2f57a8;
+
+  --color-brand-gold-500: #c9a24b;
+  --color-brand-gold-400: #d9b968;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+
+  --color-brand-green-950: var(--color-brand-green-950);
+  --color-brand-green-900: var(--color-brand-green-900);
+  --color-brand-green-800: var(--color-brand-green-800);
+  --color-brand-green-700: var(--color-brand-green-700);
+  --color-brand-green-600: var(--color-brand-green-600);
+  --color-brand-green-500: var(--color-brand-green-500);
+  --color-brand-green-400: var(--color-brand-green-400);
+  --color-brand-green-100: var(--color-brand-green-100);
+  --color-brand-green-50: var(--color-brand-green-50);
+
+  --color-brand-navy-950: var(--color-brand-navy-950);
+  --color-brand-navy-900: var(--color-brand-navy-900);
+  --color-brand-navy-800: var(--color-brand-navy-800);
+  --color-brand-navy-700: var(--color-brand-navy-700);
+  --color-brand-navy-600: var(--color-brand-navy-600);
+  --color-brand-navy-500: var(--color-brand-navy-500);
+
+  --color-brand-gold-500: var(--color-brand-gold-500);
+  --color-brand-gold-400: var(--color-brand-gold-400);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}

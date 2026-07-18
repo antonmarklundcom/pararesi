@@ -1,0 +1,146 @@
+import {
+  mysqlTable,
+  int,
+  varchar,
+  text,
+  longtext,
+  mysqlEnum,
+  datetime,
+  json,
+  timestamp,
+  uniqueIndex,
+  primaryKey,
+} from "drizzle-orm/mysql-core";
+
+// --- Users & auth ---
+
+export const users = mysqlTable("users", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 255 }).notNull(),
+  // Nullable until the user follows the set-password link from the purchase webhook.
+  passwordHash: varchar("password_hash", { length: 255 }),
+  name: varchar("name", { length: 255 }),
+  role: mysqlEnum("role", ["admin", "member"]).notNull().default("member"),
+  tier: mysqlEnum("tier", ["none", "guide", "insider"]).notNull().default("none"),
+  // Null = lifetime/one-time (guide tier). Set for insider subscriptions.
+  tierExpiresAt: datetime("tier_expires_at"),
+  lsCustomerId: varchar("ls_customer_id", { length: 64 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+}, (table) => [uniqueIndex("users_email_unique").on(table.email)]);
+
+export const passwordTokens = mysqlTable("password_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  // sha256 of the raw token; only the raw token is ever sent by email.
+  tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+  purpose: mysqlEnum("purpose", ["set", "reset"]).notNull(),
+  expiresAt: datetime("expires_at").notNull(),
+  usedAt: datetime("used_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// --- Lemon Squeezy commerce ---
+
+export const purchases = mysqlTable("purchases", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  // Idempotency key for the order_created webhook.
+  lsOrderId: varchar("ls_order_id", { length: 64 }).notNull(),
+  lsProductId: varchar("ls_product_id", { length: 64 }).notNull(),
+  lsVariantId: varchar("ls_variant_id", { length: 64 }).notNull(),
+  productKey: varchar("product_key", { length: 64 }).notNull(),
+  amountUsd: int("amount_usd").notNull(),
+  status: varchar("status", { length: 32 }).notNull(),
+  raw: json("raw"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+}, (table) => [uniqueIndex("purchases_ls_order_id_unique").on(table.lsOrderId)]);
+
+export const subscriptions = mysqlTable("subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  lsSubscriptionId: varchar("ls_subscription_id", { length: 64 }).notNull(),
+  status: varchar("status", { length: 32 }).notNull(),
+  renewsAt: datetime("renews_at"),
+  endsAt: datetime("ends_at"),
+  raw: json("raw"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+}, (table) => [uniqueIndex("subscriptions_ls_subscription_id_unique").on(table.lsSubscriptionId)]);
+
+// --- Course content ---
+
+export const modules = mysqlTable("modules", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 255 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  sortOrder: int("sort_order").notNull().default(0),
+  minTier: mysqlEnum("min_tier", ["guide", "insider"]).notNull().default("guide"),
+  status: mysqlEnum("status", ["draft", "published"]).notNull().default("draft"),
+}, (table) => [uniqueIndex("modules_slug_unique").on(table.slug)]);
+
+export const lessons = mysqlTable("lessons", {
+  id: int("id").autoincrement().primaryKey(),
+  moduleId: int("module_id").notNull(),
+  slug: varchar("slug", { length: 255 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  contentMd: longtext("content_md").notNull(),
+  videoUrl: varchar("video_url", { length: 512 }),
+  sortOrder: int("sort_order").notNull().default(0),
+  status: mysqlEnum("status", ["draft", "published"]).notNull().default("draft"),
+}, (table) => [uniqueIndex("lessons_module_id_slug_unique").on(table.moduleId, table.slug)]);
+
+export const lessonProgress = mysqlTable("lesson_progress", {
+  userId: int("user_id").notNull(),
+  lessonId: int("lesson_id").notNull(),
+  completedAt: timestamp("completed_at").notNull().defaultNow(),
+}, (table) => [primaryKey({ columns: [table.userId, table.lessonId] })]);
+
+// --- Resources & updates ---
+
+export const resources = mysqlTable("resources", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  fileUrl: varchar("file_url", { length: 512 }).notNull(),
+  minTier: mysqlEnum("min_tier", ["guide", "insider"]).notNull().default("guide"),
+  sortOrder: int("sort_order").notNull().default(0),
+  status: mysqlEnum("status", ["draft", "published"]).notNull().default("draft"),
+});
+
+export const updatesPosts = mysqlTable("updates_posts", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  contentMd: longtext("content_md").notNull(),
+  minTier: mysqlEnum("min_tier", ["guide", "insider"]).notNull().default("guide"),
+  publishedAt: datetime("published_at"),
+  status: mysqlEnum("status", ["draft", "published"]).notNull().default("draft"),
+});
+
+// --- Marketing blog ---
+
+export const blogPosts = mysqlTable("blog_posts", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 255 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  excerpt: text("excerpt"),
+  contentMd: longtext("content_md").notNull(),
+  metaTitle: varchar("meta_title", { length: 255 }),
+  metaDescription: varchar("meta_description", { length: 500 }),
+  publishedAt: datetime("published_at"),
+  status: mysqlEnum("status", ["draft", "published"]).notNull().default("draft"),
+}, (table) => [uniqueIndex("blog_posts_slug_unique").on(table.slug)]);
+
+// --- Lemon Squeezy webhook log ---
+
+export const webhookEvents = mysqlTable("webhook_events", {
+  id: int("id").autoincrement().primaryKey(),
+  lsEventId: varchar("ls_event_id", { length: 128 }).notNull(),
+  eventName: varchar("event_name", { length: 64 }).notNull(),
+  processedAt: datetime("processed_at"),
+  error: text("error"),
+  raw: json("raw"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [uniqueIndex("webhook_events_ls_event_id_unique").on(table.lsEventId)]);

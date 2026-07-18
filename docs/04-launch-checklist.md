@@ -61,8 +61,9 @@ live app's env var **immediately** (known crash pattern per deploy skill).
 7. Point the domain / subdomain; confirm HTTPS.
 8. Create the LS webhook: URL `https://<domain>/api/webhooks/lemonsqueezy`,
    secret = LEMONSQUEEZY_WEBHOOK_SECRET, events: `order_created`,
-   `subscription_created`, `subscription_payment_success`,
-   `subscription_cancelled`, `subscription_expired`.
+   `order_refunded`, `subscription_created`, `subscription_payment_success`,
+   `subscription_cancelled`, `subscription_expired`, `subscription_resumed`,
+   `subscription_unpaused`.
 9. **LS test mode end-to-end:** buy guide with a test card → webhook fires → user
    created → set-password email arrives (Resend) → login → content unlocked. Then
    subscribe → insider unlock. Then cancel → downgrade. Check webhookEvents rows.

@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "event_name": "subscription_cancelled",
+    "custom_data": { "productKey": "insider-monthly" }
+  },
+  "data": {
+    "type": "subscriptions",
+    "id": "2001",
+    "attributes": {
+      "store_id": 1,
+      "customer_id": 5002,
+      "product_id": 9002,
+      "variant_id": 9201,
+      "product_name": "Residency Insider",
+      "variant_name": "Monthly",
+      "user_name": "Sam Insider",
+      "user_email": "sam.insider@example.com",
+      "status": "cancelled",
+      "renews_at": "2026-09-17T00:00:00.000000Z",
+      "ends_at": "2026-09-17T00:00:00.000000Z"
+    }
+  }
+}
