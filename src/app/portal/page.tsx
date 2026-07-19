@@ -119,7 +119,11 @@ export default async function PortalDashboardPage() {
                   </p>
                 </div>
               ) : (
-                <LockedTeaser key={post.id} title={post.title} />
+                <LockedTeaser
+                  key={post.id}
+                  title={post.title}
+                  requiredTier={post.minTier as "guide" | "insider"}
+                />
               ),
             )
           )}
