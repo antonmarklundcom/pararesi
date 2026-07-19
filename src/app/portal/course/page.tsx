@@ -30,9 +30,17 @@ export default async function PortalCourseIndexPage() {
         ) : (
           await Promise.all(
             publishedModules.map(async (module) => {
-              const unlocked = await requireTier(user, module.minTier as "guide" | "insider");
+              const minTier = module.minTier as "guide" | "insider";
+              const unlocked = await requireTier(user, minTier);
               if (!unlocked) {
-                return <LockedTeaser key={module.id} title={module.title} teaser={module.description ?? undefined} />;
+                return (
+                  <LockedTeaser
+                    key={module.id}
+                    title={module.title}
+                    teaser={module.description ?? undefined}
+                    requiredTier={minTier}
+                  />
+                );
               }
 
               const moduleLessons = allLessons

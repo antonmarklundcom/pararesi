@@ -31,9 +31,10 @@ export default async function PortalUpdatesPage() {
           <p className="text-sm text-brand-navy-900/60">No updates yet.</p>
         ) : (
           publishedUpdates.map((post) => {
-            const unlocked = TIER_RANK[tier] >= TIER_RANK[post.minTier as "guide" | "insider"];
+            const minTier = post.minTier as "guide" | "insider";
+            const unlocked = TIER_RANK[tier] >= TIER_RANK[minTier];
             if (!unlocked) {
-              return <LockedTeaser key={post.id} title={post.title} />;
+              return <LockedTeaser key={post.id} title={post.title} requiredTier={minTier} />;
             }
             return (
               <div key={post.id} className="rounded-xl border border-brand-navy-900/10 bg-white p-5">

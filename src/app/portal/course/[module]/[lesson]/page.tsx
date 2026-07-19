@@ -28,7 +28,8 @@ export default async function LessonPage({ params }: { params: Promise<Params> }
     .where(and(eq(modules.slug, moduleSlug), eq(modules.status, "published")));
   if (!module) notFound();
 
-  const unlocked = await requireTier(user, module.minTier as "guide" | "insider");
+  const minTier = module.minTier as "guide" | "insider";
+  const unlocked = await requireTier(user, minTier);
 
   if (!unlocked) {
     // Never select contentMd for a locked lesson — only enough to render the teaser.
@@ -44,7 +45,11 @@ export default async function LessonPage({ params }: { params: Promise<Params> }
           &larr; Course
         </Link>
         <div className="mt-4">
-          <LockedTeaser title={lessonTitle.title} teaser="This lesson is part of the Insider tier." />
+          <LockedTeaser
+            title={lessonTitle.title}
+            teaser={`This lesson is part of the ${minTier === "guide" ? "Guide" : "Insider"} tier.`}
+            requiredTier={minTier}
+          />
         </div>
       </div>
     );

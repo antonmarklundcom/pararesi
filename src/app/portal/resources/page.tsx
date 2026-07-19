@@ -27,10 +27,16 @@ export default async function PortalResourcesPage() {
           <p className="text-sm text-brand-navy-900/60">No resources published yet.</p>
         ) : (
           publishedResources.map((resource) => {
-            const unlocked = TIER_RANK[tier] >= TIER_RANK[resource.minTier as "guide" | "insider"];
+            const minTier = resource.minTier as "guide" | "insider";
+            const unlocked = TIER_RANK[tier] >= TIER_RANK[minTier];
             if (!unlocked) {
               return (
-                <LockedTeaser key={resource.id} title={resource.title} teaser={resource.description ?? undefined} />
+                <LockedTeaser
+                  key={resource.id}
+                  title={resource.title}
+                  teaser={resource.description ?? undefined}
+                  requiredTier={minTier}
+                />
               );
             }
             return (
