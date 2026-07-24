@@ -5,8 +5,10 @@ $7–27 info product (tripwire) about obtaining Paraguay residency, with an "Ins
 subscription tier as the internal upsell. Payments via **Lemon Squeezy** (merchant of
 record). Deployed to **Hostinger managed Node.js** with **Hostinger MySQL**.
 
-> **Status: Planning phase complete. No application code yet.**
-> Start building with Phase 0 in [docs/03-build-guide.md](docs/03-build-guide.md).
+> **Status (2026-07-24): phases 0–6 built, `npm run build` green.**
+> Phase 7 (QA + security pass) has not run, phases 8–9 (deploy, content, launch) are
+> pending owner input. Known blocker before launch: the webhook idempotency key drops
+> subscription renewals — see [docs/07-review-and-next-steps.md](docs/07-review-and-next-steps.md).
 
 ## Documentation
 
@@ -18,6 +20,7 @@ record). Deployed to **Hostinger managed Node.js** with **Hostinger MySQL**.
 | [docs/04-launch-checklist.md](docs/04-launch-checklist.md) | Deploy runbook (Hostinger) and go-live checklist |
 | [docs/05-open-questions.md](docs/05-open-questions.md) | Lemon Squeezy product-structure decisions — **resolved 2026-07-16** (guide one-time price still TBD) |
 | [docs/06-fable5-review-notes.md](docs/06-fable5-review-notes.md) | Fable 5 review pass: corrections builder sessions must apply (webhook semantics, refunds, idempotency, checkout↔user linking) |
+| [docs/07-review-and-next-steps.md](docs/07-review-and-next-steps.md) | Post-build review (2026-07-24): what's actually left, defects found in the built code, and pricing/growth improvements before launch |
 
 ## Stack (fixed — do not renegotiate)
 
