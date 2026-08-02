@@ -1,10 +1,16 @@
 import { cookies } from "next/headers";
 import { getIronSession, type SessionOptions } from "iron-session";
 
+/**
+ * Deliberately minimal. `role` is here because middleware gates /admin before
+ * a database round-trip and cannot use next/headers. Tier is NOT cached:
+ * entitlement changes between requests (a subscription lapses, a refund lands)
+ * and every gate re-reads it through effectiveTier, so a cached copy could
+ * only ever be a stale second source of truth.
+ */
 export type SessionData = {
   userId: number;
   role: "admin" | "member";
-  tier: "none" | "guide" | "insider";
 };
 
 function getSessionSecret() {

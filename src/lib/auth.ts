@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { users, purchases } from "@/db/schema";
 import { getSession } from "./session";
@@ -26,10 +26,19 @@ export async function effectiveTier(user: UserRow): Promise<Tier> {
   const now = new Date();
 
   if (tier === "insider" && user.tierExpiresAt && user.tierExpiresAt < now) {
+    // Refunded purchases don't count — matches findGuidePurchase in the
+    // webhook store, so a read-time downgrade lands on the same tier the
+    // webhook handlers would have written.
     const [guidePurchase] = await db
       .select()
       .from(purchases)
-      .where(and(eq(purchases.userId, user.id), eq(purchases.productKey, "guide")));
+      .where(
+        and(
+          eq(purchases.userId, user.id),
+          eq(purchases.productKey, "guide"),
+          ne(purchases.status, "refunded"),
+        ),
+      );
     return resolveEffectiveTier({
       tier,
       tierExpiresAt: user.tierExpiresAt,

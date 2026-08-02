@@ -1,4 +1,4 @@
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { webhookEvents, users, purchases, subscriptions } from "@/db/schema";
 import type { Tier } from "@/lib/tiers";
@@ -82,11 +82,17 @@ export const drizzleWebhookStore: WebhookStore = {
     return row ? toPurchase(row) : null;
   },
 
-  async findPurchaseByProductKey(userId, productKey) {
+  async findGuidePurchase(userId) {
     const [row] = await db
       .select()
       .from(purchases)
-      .where(and(eq(purchases.userId, userId), eq(purchases.productKey, productKey)));
+      .where(
+        and(
+          eq(purchases.userId, userId),
+          eq(purchases.productKey, "guide"),
+          ne(purchases.status, "refunded"),
+        ),
+      );
     return row ? toPurchase(row) : null;
   },
 
