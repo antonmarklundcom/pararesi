@@ -4,7 +4,9 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users, purchases, subscriptions } from "@/db/schema";
 import { EntityForm } from "@/components/admin/EntityForm";
-import { updateUserAction } from "../../actions";
+import { DeleteButton } from "@/components/admin/DeleteButton";
+import { updateUserAction, hardDeleteUserAction } from "../../actions";
+import { ExportUserJsonButton } from "../../ExportUserJsonButton";
 
 export const metadata: Metadata = {
   title: "Admin · Edit user",
@@ -28,6 +30,13 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
         <p className="mt-1 text-sm text-brand-navy-900/60">
           {user.name ?? "—"} · joined {new Date(user.createdAt).toLocaleDateString()}
         </p>
+        <div className="mt-3 flex gap-4">
+          <ExportUserJsonButton userId={user.id} email={user.email} />
+          <DeleteButton
+            action={hardDeleteUserAction.bind(null, user.id)}
+            label="Delete user (GDPR)"
+          />
+        </div>
       </div>
 
       <EntityForm
