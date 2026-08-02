@@ -43,17 +43,18 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-brand-navy-950">Third-party services</h2>
             <p className="mt-2">
-              We use Lemon Squeezy for payment processing (as merchant of record) and Resend for
-              transactional email delivery. Each has its own privacy policy governing how they
-              handle your data.
+              We use Lemon Squeezy for payment processing (as merchant of record), Resend for
+              transactional email delivery, and Plausible for privacy-friendly, cookieless site
+              analytics. Each has its own privacy policy governing how they handle your data.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-brand-navy-950">Cookies</h2>
             <p className="mt-2">
-              We use a single essential cookie to keep you logged in to the members portal. We do
-              not use advertising or tracking cookies.
+              We use a single essential cookie to keep you logged in to the members portal. Our
+              site analytics (Plausible) is cookieless and does not track you individually across
+              sites, so we do not show a cookie consent banner.
             </p>
           </section>
 

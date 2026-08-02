@@ -1,5 +1,6 @@
 import { TIER_RANK, type Tier } from "@/lib/tiers";
 import { lsEventId, type LemonSqueezyPayload } from "@/lib/ls-webhook";
+import { trackServerEvent } from "@/lib/analytics";
 import {
   ACTIVE_SUBSCRIPTION_STATUSES,
   TIER_GRACE_DAYS,
@@ -194,6 +195,7 @@ async function handleOrderCreated(payload: LemonSqueezyPayload, deps: WebhookDep
       status: attrs.status,
       raw: payload,
     });
+    await trackServerEvent("Purchase completed", { productKey });
   }
 
   if (productKey === "guide") {
