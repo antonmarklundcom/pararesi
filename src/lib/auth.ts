@@ -3,11 +3,10 @@ import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { users, purchases } from "@/db/schema";
 import { getSession } from "./session";
+import { TIER_RANK, resolveEffectiveTier, type Tier } from "./tiers";
 
-export type Tier = "none" | "guide" | "insider";
+export { TIER_RANK, type Tier };
 export type UserRow = typeof users.$inferSelect;
-
-export const TIER_RANK: Record<Tier, number> = { none: 0, guide: 1, insider: 2 };
 
 export async function getCurrentUser(): Promise<UserRow | null> {
   const session = await getSession();
@@ -18,22 +17,28 @@ export async function getCurrentUser(): Promise<UserRow | null> {
 }
 
 /**
- * Read-time tier downgrade, independent of whether the Lemon Squeezy webhook
- * that should have downgraded a lapsed subscriber ever ran. tierExpiresAt
- * already has the renewal grace period baked in by the webhook handler.
+ * Read-time tier downgrade — see resolveEffectiveTier in ./tiers for the rule.
+ * The guide-purchase lookup is only needed on the expiry path, so it stays
+ * behind the same condition rather than running on every request.
  */
 export async function effectiveTier(user: UserRow): Promise<Tier> {
   const tier = user.tier as Tier;
+  const now = new Date();
 
-  if (tier === "insider" && user.tierExpiresAt && user.tierExpiresAt < new Date()) {
+  if (tier === "insider" && user.tierExpiresAt && user.tierExpiresAt < now) {
     const [guidePurchase] = await db
       .select()
       .from(purchases)
       .where(and(eq(purchases.userId, user.id), eq(purchases.productKey, "guide")));
-    return guidePurchase ? "guide" : "none";
+    return resolveEffectiveTier({
+      tier,
+      tierExpiresAt: user.tierExpiresAt,
+      now,
+      hasGuidePurchase: Boolean(guidePurchase),
+    });
   }
 
-  return tier;
+  return resolveEffectiveTier({ tier, tierExpiresAt: user.tierExpiresAt ?? null, now, hasGuidePurchase: false });
 }
 
 /** Redirects to /login if there's no session. Use in every gated layout/page/action. */

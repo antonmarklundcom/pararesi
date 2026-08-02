@@ -16,11 +16,24 @@ export type LemonSqueezyPayload = {
  * doesn't send a dedicated delivery id, so this is derived from the payload:
  * a retried delivery of the same event must collapse to the same key, while
  * two genuinely distinct events must not.
+ *
+ * `event_name + data.id` alone is NOT enough (defect B1): for every
+ * subscription_* event `data.id` is the subscription id, which is stable for
+ * the life of the subscription, so month 2's renewal collapsed onto month 1's
+ * key and was dropped as a duplicate. `updated_at` — present on every Lemon
+ * Squeezy resource and bumped on every state change — is what separates two
+ * real events on the same resource.
+ *
+ * The `updated_at`-less fallback exists only for payloads that predate this
+ * fix or are hand-rolled; real deliveries always carry it.
  */
 export function lsEventId(payload: LemonSqueezyPayload): string {
   const eventName = payload.meta?.event_name ?? "unknown";
   const resourceId = payload.data?.id ?? "unknown";
-  return `${eventName}:${resourceId}`;
+  const updatedAt = payload.data?.attributes?.updated_at;
+  return typeof updatedAt === "string" && updatedAt.length > 0
+    ? `${eventName}:${resourceId}:${updatedAt}`
+    : `${eventName}:${resourceId}`;
 }
 
 /** Constant-time HMAC-SHA256 check of the raw request body against `x-signature`. */
