@@ -61,6 +61,13 @@ export async function listRecentWebhookEvents(limit = DEFAULT_LIMIT): Promise<We
   return events.map(toWebhookEventSummary);
 }
 
+/** Raw payload for a single event, pretty-printed. Admin-only. */
+export async function getWebhookEventRawPayload(eventId: number): Promise<string | null> {
+  await requireAdmin();
+  const event = await productionWebhookDeps().store.findWebhookEventById(eventId);
+  return event ? JSON.stringify(event.raw, null, 2) : null;
+}
+
 export type ReplayResult = { ok: true } | { ok: false; error: string };
 
 /**

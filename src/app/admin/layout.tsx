@@ -9,6 +9,7 @@ const links = [
   { href: "/admin/updates", label: "Updates" },
   { href: "/admin/blog", label: "Blog" },
   { href: "/admin/users", label: "Users" },
+  { href: "/admin/webhooks", label: "Webhooks" },
 ];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
