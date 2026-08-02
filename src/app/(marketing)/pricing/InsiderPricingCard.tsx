@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createCheckoutAction } from "@/lib/checkout-action";
 import { Button } from "@/components/ui/Button";
 import { siteConfig } from "@/config/site";
+import { trackClientEvent } from "@/lib/analytics";
 
 export function InsiderPricingCard() {
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
@@ -51,7 +52,11 @@ export function InsiderPricingCard() {
       ) : null}
 
       <form action={createCheckoutAction.bind(null, productKey)} className="mt-6">
-        <Button type="submit" className="w-full">
+        <Button
+          type="submit"
+          className="w-full"
+          onClick={() => trackClientEvent("Insider checkout started")}
+        >
           Get Insider
         </Button>
       </form>
