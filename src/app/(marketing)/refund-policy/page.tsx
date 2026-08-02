@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Refund Policy",
@@ -7,7 +8,8 @@ export const metadata: Metadata = {
 };
 
 // Required by Lemon Squeezy as merchant of record. Must match what LS is told
-// during store setup (docs/04 §3) — finalize the [PLACEHOLDER] window before launch.
+// during store setup (docs/04 §3). Values come from src/config/site.ts — fill
+// in the TODO(owner) fields there before launch.
 export default function RefundPolicyPage() {
   return (
     <Container className="py-20">
@@ -15,15 +17,21 @@ export default function RefundPolicyPage() {
         <h1 className="text-4xl font-semibold tracking-tight text-brand-navy-950">
           Refund Policy
         </h1>
-        <p className="mt-2 text-sm text-brand-navy-900/50">Last updated: [PLACEHOLDER date]</p>
+        <p className="mt-2 text-sm text-brand-navy-900/50">
+          Last updated: {siteConfig.legalLastUpdated}
+        </p>
 
         <div className="mt-8 space-y-8 text-brand-navy-900/80">
           <section>
             <h2 className="text-lg font-semibold text-brand-navy-950">The Guide (one-time purchase)</h2>
             <p className="mt-2">
               If the Guide isn&apos;t useful to you, contact us within{" "}
-              <strong>[PLACEHOLDER — e.g. 14 days]</strong> of purchase for a full refund. After
-              that window, purchases are final.
+              <strong>
+                {siteConfig.refundWindowDays > 0
+                  ? `${siteConfig.refundWindowDays} days`
+                  : "[SET REFUND WINDOW]"}
+              </strong>{" "}
+              of purchase for a full refund. After that window, purchases are final.
             </p>
           </section>
 
@@ -40,7 +48,7 @@ export default function RefundPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold text-brand-navy-950">How to request a refund</h2>
             <p className="mt-2">
-              Email [PLACEHOLDER contact email] with your order number (from your purchase
+              Email {siteConfig.contactEmail} with your order number (from your purchase
               receipt). Refunds are processed back to your original payment method by Lemon
               Squeezy, our merchant of record, and typically appear within [PLACEHOLDER —
               e.g. 5–10 business days].

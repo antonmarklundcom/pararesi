@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "Privacy Policy for Paraguay Residency Guide.",
 };
 
-// Required by Lemon Squeezy as merchant of record. [PLACEHOLDER] markers below
-// need the owner's legal entity name, jurisdiction, and contact details before launch.
+// Required by Lemon Squeezy as merchant of record. Values come from
+// src/config/site.ts — fill in the TODO(owner) fields there before launch.
 export default function PrivacyPage() {
   return (
     <Container className="py-20">
@@ -15,7 +16,9 @@ export default function PrivacyPage() {
         <h1 className="text-4xl font-semibold tracking-tight text-brand-navy-950">
           Privacy Policy
         </h1>
-        <p className="mt-2 text-sm text-brand-navy-900/50">Last updated: [PLACEHOLDER date]</p>
+        <p className="mt-2 text-sm text-brand-navy-900/50">
+          Last updated: {siteConfig.legalLastUpdated}
+        </p>
 
         <div className="mt-8 space-y-8 text-brand-navy-900/80">
           <section>
@@ -73,7 +76,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-brand-navy-950">Contact</h2>
-            <p className="mt-2">[PLACEHOLDER contact email]</p>
+            <p className="mt-2">{siteConfig.contactEmail}</p>
           </section>
         </div>
       </div>

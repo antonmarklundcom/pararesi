@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createCheckoutAction } from "@/lib/checkout-action";
 import { Button } from "@/components/ui/Button";
+import { siteConfig } from "@/config/site";
 
 export function InsiderPricingCard() {
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
@@ -40,7 +41,7 @@ export function InsiderPricingCard() {
       </div>
 
       <p className="mt-6 text-4xl font-semibold text-brand-navy-950">
-        {period === "monthly" ? "$7" : "$47"}
+        {period === "monthly" ? siteConfig.insiderMonthlyPrice : siteConfig.insiderYearlyPrice}
         <span className="text-base font-normal text-brand-navy-900/50">
           /{period === "monthly" ? "mo" : "yr"}
         </span>

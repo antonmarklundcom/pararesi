@@ -7,6 +7,7 @@ import { Container } from "@/components/ui/Container";
 import { BuyButton } from "@/components/marketing/BuyButton";
 import { Faq } from "@/components/marketing/Faq";
 import { productJsonLd, faqPageJsonLd } from "@/lib/seo";
+import { siteConfig } from "@/config/site";
 
 export const dynamic = "force-dynamic";
 
@@ -96,7 +97,7 @@ export default async function GuidePage() {
           </h1>
           <p className="mt-6 text-lg leading-8 text-brand-navy-900/70">{DESCRIPTION}</p>
           <div className="mt-10 max-w-xs">
-            <BuyButton productKey="guide">Get the Guide — [PLACEHOLDER price]</BuyButton>
+            <BuyButton productKey="guide">Get the Guide — {siteConfig.guidePrice}</BuyButton>
             <p className="mt-3 text-center text-xs text-brand-navy-900/50">
               One-time payment. See{" "}
               <Link href="/refund-policy" className="underline hover:text-brand-navy-900">
@@ -200,7 +201,7 @@ export default async function GuidePage() {
         <div className="rounded-2xl bg-brand-navy-950 px-8 py-12 text-center">
           <h2 className="text-2xl font-semibold text-white">Ready to get started?</h2>
           <div className="mx-auto mt-6 max-w-xs">
-            <BuyButton productKey="guide">Get the Guide — [PLACEHOLDER price]</BuyButton>
+            <BuyButton productKey="guide">Get the Guide — {siteConfig.guidePrice}</BuyButton>
           </div>
         </div>
       </Container>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { BuyButton } from "@/components/marketing/BuyButton";
 import { InsiderPricingCard } from "./InsiderPricingCard";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -27,7 +28,7 @@ export default function PricingPage() {
             The core step-by-step course, document checklist, and cost/timeline breakdown.
             One-time purchase, lifetime access.
           </p>
-          <p className="mt-6 text-4xl font-semibold text-brand-navy-950">[PLACEHOLDER]</p>
+          <p className="mt-6 text-4xl font-semibold text-brand-navy-950">{siteConfig.guidePrice}</p>
           <p className="mt-1 text-sm text-brand-navy-900/50">one-time payment</p>
           <div className="mt-6">
             <BuyButton productKey="guide" variant="secondary">
