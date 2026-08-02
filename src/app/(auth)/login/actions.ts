@@ -6,7 +6,6 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { getSession } from "@/lib/session";
-import { effectiveTier } from "@/lib/auth";
 import { rateLimit } from "@/lib/ratelimit";
 import { getClientIp } from "@/lib/request-ip";
 
@@ -50,7 +49,6 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
   const session = await getSession();
   session.userId = user.id;
   session.role = user.role;
-  session.tier = await effectiveTier(user);
   await session.save();
 
   redirect(next ?? (user.role === "admin" ? "/admin/modules" : "/portal"));

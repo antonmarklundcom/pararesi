@@ -169,8 +169,18 @@ async function handleOrderCreated(payload: LemonSqueezyPayload, deps: WebhookDep
     await deps.store.updateUser(user.id, { lsCustomerId: String(attrs.customer_id) });
   }
 
-  const productKey =
-    payload.meta.custom_data?.productKey ?? deps.productKeyForVariantId(attrs.first_order_item.variant_id) ?? "guide";
+  // No silent fallback to "guide": a misconfigured LS_VARIANT_* env var used
+  // to downgrade an insider purchase to the cheaper product without a trace.
+  // Throwing records the event with an error and returns a 500, so Lemon
+  // Squeezy retries and the order can be applied once the mapping is fixed.
+  const variantId = attrs.first_order_item.variant_id;
+  const productKey = payload.meta.custom_data?.productKey ?? deps.productKeyForVariantId(variantId);
+  if (!productKey) {
+    throw new Error(
+      `order_created ${orderId}: variant_id ${variantId} maps to no productKey. ` +
+        `Check LS_VARIANT_GUIDE / LS_VARIANT_INSIDER_MONTHLY / LS_VARIANT_INSIDER_YEARLY against the Lemon Squeezy dashboard.`,
+    );
+  }
 
   const existingPurchase = await deps.store.findPurchaseByOrderId(orderId);
   if (!existingPurchase) {
@@ -201,6 +211,22 @@ async function handleOrderCreated(payload: LemonSqueezyPayload, deps: WebhookDep
   }
 }
 
+/**
+ * Recomputes what a user is entitled to from what they currently hold, rather
+ * than mutating the tier they happen to be on.
+ *
+ * The old refund path only acted when `user.tier === "guide"`, so a refund for
+ * a member whose tier had drifted anywhere else was a silent no-op. Deriving
+ * the tier makes the rule total, and makes it agree with subscription_expired.
+ */
+async function entitledTier(userId: number, deps: WebhookDeps): Promise<Tier> {
+  const activeSub = await deps.store.findActiveSubscriptionForUser(userId);
+  if (activeSub) return "insider";
+
+  const guidePurchase = await deps.store.findGuidePurchase(userId);
+  return guidePurchase ? "guide" : "none";
+}
+
 async function handleOrderRefunded(payload: LemonSqueezyPayload, deps: WebhookDeps) {
   const orderId = payload.data.id;
 
@@ -210,11 +236,20 @@ async function handleOrderRefunded(payload: LemonSqueezyPayload, deps: WebhookDe
   await deps.store.updatePurchaseStatus(purchase.id, "refunded");
 
   const user = await deps.store.findUserById(purchase.userId);
-  if (!user || user.tier !== "guide") return;
+  if (!user) return;
 
-  const activeSub = await deps.store.findActiveSubscriptionForUser(user.id);
-  if (!activeSub) {
-    await deps.store.updateUser(user.id, { tier: "none" });
+  const tier = await entitledTier(user.id, deps);
+
+  // Never *raise* a tier on a refund. A member sitting above what they are
+  // entitled to may have been granted it by hand in /admin/users, and a
+  // refund of an unrelated order is not the event that should revoke that.
+  if (TIER_RANK[tier] < TIER_RANK[user.tier]) {
+    // Clearing tierExpiresAt matters when dropping out of insider: a stale
+    // future date would otherwise keep effectiveTier from ever re-checking.
+    await deps.store.updateUser(user.id, {
+      tier,
+      ...(tier === "insider" ? {} : { tierExpiresAt: null }),
+    });
   }
 }
 
@@ -353,7 +388,7 @@ async function handleSubscriptionEnded(payload: LemonSqueezyPayload, deps: Webho
   const user = await deps.store.findUserById(sub.userId);
   if (!user) return;
 
-  const guidePurchase = await deps.store.findPurchaseByProductKey(user.id, "guide");
+  const guidePurchase = await deps.store.findGuidePurchase(user.id);
   await deps.store.updateUser(user.id, { tier: guidePurchase ? "guide" : "none", tierExpiresAt: null });
 }
 

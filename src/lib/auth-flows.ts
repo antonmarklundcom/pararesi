@@ -4,7 +4,6 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { consumePasswordToken, type TokenPurpose } from "./tokens";
 import { getSession } from "./session";
-import { effectiveTier } from "./auth";
 
 const BCRYPT_COST = 12;
 const MIN_PASSWORD_LENGTH = 8;
@@ -37,7 +36,6 @@ export async function applyPasswordFromToken(
   const session = await getSession();
   session.userId = user.id;
   session.role = user.role;
-  session.tier = await effectiveTier(user);
   await session.save();
 
   return null;

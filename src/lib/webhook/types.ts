@@ -67,7 +67,12 @@ export interface WebhookStore {
   ): Promise<void>;
 
   findPurchaseByOrderId(lsOrderId: string): Promise<PurchaseRecord | null>;
-  findPurchaseByProductKey(userId: number, productKey: string): Promise<PurchaseRecord | null>;
+  /**
+   * The user's guide purchase, if they still hold one. Excludes refunded
+   * purchases — a refunded guide must not keep granting guide access after a
+   * subscription expires.
+   */
+  findGuidePurchase(userId: number): Promise<PurchaseRecord | null>;
   createPurchase(input: {
     userId: number;
     lsOrderId: string;

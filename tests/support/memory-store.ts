@@ -73,8 +73,12 @@ export class MemoryStore implements WebhookStore {
     return this.purchases.find((p) => p.lsOrderId === lsOrderId) ?? null;
   }
 
-  async findPurchaseByProductKey(userId: number, productKey: string) {
-    return this.purchases.find((p) => p.userId === userId && p.productKey === productKey) ?? null;
+  async findGuidePurchase(userId: number) {
+    return (
+      this.purchases.find(
+        (p) => p.userId === userId && p.productKey === "guide" && p.status !== "refunded",
+      ) ?? null
+    );
   }
 
   async createPurchase(input: { userId: number; lsOrderId: string; productKey: string; status: string }) {
