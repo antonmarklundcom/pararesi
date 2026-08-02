@@ -73,29 +73,36 @@ describe("lsEventId", () => {
   });
 
   /**
-   * PINS DEFECT B1 (docs/07-review-and-next-steps.md).
-   *
-   * `it.fails` asserts that this expectation currently does NOT hold — so CI
-   * stays green while the bug is documented in executable form. PR 2 fixes
-   * the key derivation, at which point this test starts passing, `it.fails`
-   * starts failing, and it must be flipped back to a plain `it`.
-   *
-   * Today the key is `${event_name}:${data.id}`. For subscription events
-   * data.id is the subscription id, stable for the subscription's whole life,
-   * so month 2's renewal collapses onto month 1's key and is dropped as a
-   * duplicate — the member's tierExpiresAt is never extended.
+   * DEFECT B1 (docs/07-review-and-next-steps.md), fixed. Was pinned with
+   * `it.fails` in PR 1; the key now includes attributes.updated_at, so two
+   * renewals of the same subscription no longer collide.
    */
-  it.fails("gives month 1 and month 2 renewals distinct keys [B1 — expected to fail until PR 2]", () => {
+  it("gives month 1 and month 2 renewals distinct keys", () => {
     const month1 = paymentSuccess("3001", "2026-08-17T00:00:00.000000Z");
     const month2 = paymentSuccess("3002", "2026-09-17T00:00:00.000000Z");
 
-    // Simulating the *old* payload shape the current handler was written
-    // against: same `subscriptions` object id on every renewal.
-    const asOldShape = (p: LemonSqueezyPayload): LemonSqueezyPayload => ({
-      ...p,
-      data: { ...p.data, type: "subscriptions", id: "2001" },
-    });
+    expect(lsEventId(month1)).not.toBe(lsEventId(month2));
+  });
 
-    expect(lsEventId(asOldShape(month1))).not.toBe(lsEventId(asOldShape(month2)));
+  it("separates two events on the same resource id by updated_at", () => {
+    // The worst case: same event name, same data.id — only updated_at differs.
+    // This is what a cancel -> resume -> cancel sequence looks like.
+    const first = paymentSuccess("2001", "2026-08-17T00:00:00.000000Z");
+    const second = paymentSuccess("2001", "2026-09-17T00:00:00.000000Z");
+
+    expect(lsEventId(first)).not.toBe(lsEventId(second));
+  });
+
+  it("falls back to event_name:id when a payload carries no updated_at", () => {
+    const payload: LemonSqueezyPayload = {
+      meta: { event_name: "subscription_created" },
+      data: { type: "subscriptions", id: "2001", attributes: {} },
+    };
+    expect(lsEventId(payload)).toBe("subscription_created:2001");
+  });
+
+  it("stays inside the webhook_events.ls_event_id column width (varchar 128)", () => {
+    const payload = paymentSuccess("999999999999", "2026-09-17T00:00:00.000000Z");
+    expect(lsEventId(payload).length).toBeLessThanOrEqual(128);
   });
 });

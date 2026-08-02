@@ -1,7 +1,10 @@
 {
   "meta": {
+    "test_mode": true,
     "event_name": "subscription_created",
-    "custom_data": { "productKey": "insider-monthly" }
+    "custom_data": {
+      "productKey": "insider-monthly"
+    }
   },
   "data": {
     "type": "subscriptions",
@@ -10,7 +13,7 @@
       "store_id": 1,
       "customer_id": 5002,
       "order_id": 1002,
-      "order_item_id": 1,
+      "order_item_id": 2,
       "product_id": 9002,
       "variant_id": 9201,
       "product_name": "Residency Insider",
@@ -18,9 +21,32 @@
       "user_name": "Sam Insider",
       "user_email": "sam.insider@example.com",
       "status": "active",
+      "status_formatted": "Active",
+      "card_brand": "visa",
+      "card_last_four": "4242",
+      "pause": null,
+      "cancelled": false,
+      "trial_ends_at": null,
+      "billing_anchor": 17,
+      "first_subscription_item": {
+        "id": 2,
+        "subscription_id": 2001,
+        "price_id": 9302,
+        "quantity": 1,
+        "is_usage_based": false,
+        "created_at": "2026-07-17T00:00:00.000000Z",
+        "updated_at": "2026-07-17T00:00:00.000000Z"
+      },
+      "urls": {
+        "update_payment_method": "https://my-store.lemonsqueezy.com/subscription/2001/payment-details?expires=0&signature=example",
+        "customer_portal": "https://my-store.lemonsqueezy.com/billing?expires=0&signature=example",
+        "customer_portal_update_subscription": "https://my-store.lemonsqueezy.com/billing/2001/update?expires=0&signature=example"
+      },
       "renews_at": "2026-08-17T00:00:00.000000Z",
       "ends_at": null,
-      "created_at": "2026-07-17T00:00:00.000000Z"
+      "created_at": "2026-07-17T00:00:00.000000Z",
+      "updated_at": "2026-07-17T00:00:00.000000Z",
+      "test_mode": true
     }
   }
 }

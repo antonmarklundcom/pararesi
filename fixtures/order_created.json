@@ -1,5 +1,6 @@
 {
   "meta": {
+    "test_mode": true,
     "event_name": "order_created",
     "custom_data": { "productKey": "guide" }
   },
@@ -9,22 +10,57 @@
     "attributes": {
       "store_id": 1,
       "customer_id": 5001,
+      "identifier": "b2c3d4e5-0000-4000-8000-000000001001",
+      "order_number": 1001,
       "user_name": "Jane Buyer",
       "user_email": "jane.buyer@example.com",
       "currency": "USD",
-      "status": "paid",
+      "currency_rate": "1.0000",
+      "subtotal": 1900,
+      "setup_fee": 0,
+      "discount_total": 0,
+      "tax": 0,
       "total": 1900,
+      "refunded_amount": 0,
+      "subtotal_usd": 1900,
+      "setup_fee_usd": 0,
+      "discount_total_usd": 0,
+      "tax_usd": 0,
+      "total_usd": 1900,
+      "refunded_amount_usd": 0,
+      "tax_name": null,
+      "tax_rate": "0.00",
+      "tax_inclusive": false,
+      "status": "paid",
+      "status_formatted": "Paid",
+      "refunded": false,
+      "refunded_at": null,
+      "subtotal_formatted": "$19.00",
+      "setup_fee_formatted": "$0.00",
+      "discount_total_formatted": "$0.00",
+      "tax_formatted": "$0.00",
       "total_formatted": "$19.00",
+      "refunded_amount_formatted": "$0.00",
       "first_order_item": {
+        "id": 1,
+        "order_id": 1001,
         "product_id": 9001,
         "variant_id": 9101,
+        "price_id": 9301,
+        "quantity": 1,
         "product_name": "Paraguay Residency Guide",
-        "variant_name": "Guide"
+        "variant_name": "Guide",
+        "price": 1900,
+        "created_at": "2026-07-17T00:00:00.000000Z",
+        "updated_at": "2026-07-17T00:00:00.000000Z",
+        "test_mode": true
       },
       "urls": {
-        "receipt": "https://app.lemonsqueezy.com/my-orders/example-receipt"
+        "receipt": "https://app.lemonsqueezy.com/my-orders/b2c3d4e5-0000-4000-8000-000000001001"
       },
-      "created_at": "2026-07-17T00:00:00.000000Z"
+      "created_at": "2026-07-17T00:00:00.000000Z",
+      "updated_at": "2026-07-17T00:00:00.000000Z",
+      "test_mode": true
     }
   }
 }

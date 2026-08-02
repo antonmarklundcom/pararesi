@@ -87,6 +87,43 @@ export async function createCheckoutUrl({ productKey, email, userId }: CreateChe
 }
 
 /**
+ * Fetches a subscription's current state from the Lemon Squeezy API and
+ * returns the raw JSON:API resource (`{ id, type, attributes }`).
+ *
+ * The webhook handler needs this because `subscription_payment_success`
+ * delivers a `subscription-invoices` object, which has no `renews_at` — the
+ * new paid-through date only exists on the subscription itself.
+ */
+export async function fetchSubscriptionResource(
+  lsSubscriptionId: string,
+): Promise<{ id: string; type: string; attributes: Record<string, unknown> }> {
+  const apiKey = process.env.LEMONSQUEEZY_API_KEY;
+  if (!apiKey) {
+    throw new Error("LEMONSQUEEZY_API_KEY must be set.");
+  }
+
+  const res = await fetch(`https://api.lemonsqueezy.com/v1/subscriptions/${lsSubscriptionId}`, {
+    headers: {
+      Accept: "application/vnd.api+json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Lemon Squeezy subscription fetch failed (${res.status}): ${body}`);
+  }
+
+  const json = await res.json();
+  const data = json?.data;
+  if (!data || typeof data.id === "undefined" || !data.attributes) {
+    throw new Error(`Lemon Squeezy subscription ${lsSubscriptionId} response had no usable data object.`);
+  }
+
+  return { id: String(data.id), type: String(data.type ?? "subscriptions"), attributes: data.attributes };
+}
+
+/**
  * Fetches a fresh customer-portal URL for a subscription. Lemon Squeezy
  * pre-signs this URL and it expires 24h after the request, so it must be
  * fetched on demand — never stored from an old webhook payload.
