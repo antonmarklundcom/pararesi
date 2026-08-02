@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { eq, and, inArray } from "drizzle-orm";
 import { db } from "@/db";
@@ -7,25 +6,12 @@ import { TIER_RANK, type Tier } from "@/lib/auth";
 import { productKeyForVariantId } from "@/lib/lemonsqueezy";
 import { createPasswordToken } from "@/lib/tokens";
 import { sendEmail } from "@/lib/email";
+import { lsEventId, verifySignature, type LemonSqueezyPayload } from "@/lib/ls-webhook";
 
 export const dynamic = "force-dynamic";
 
 const TIER_GRACE_DAYS = 3;
 const ACTIVE_SUBSCRIPTION_STATUSES = ["active", "on_trial", "past_due"];
-
-type LemonSqueezyPayload = {
-  meta: { event_name: string; custom_data?: Record<string, string> };
-  data: { id: string; type: string; attributes: Record<string, unknown> };
-};
-
-function verifySignature(rawBody: string, signatureHeader: string | null, secret: string): boolean {
-  if (!signatureHeader) return false;
-  const digest = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
-  const digestBuffer = Buffer.from(digest, "utf8");
-  const signatureBuffer = Buffer.from(signatureHeader, "utf8");
-  if (digestBuffer.length !== signatureBuffer.length) return false;
-  return crypto.timingSafeEqual(digestBuffer, signatureBuffer);
-}
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -44,20 +30,16 @@ export async function POST(request: Request) {
   }
 
   const eventName = payload.meta?.event_name ?? "unknown";
-  const resourceId = payload.data?.id ?? "unknown";
-  // Lemon Squeezy doesn't send a dedicated delivery id, so event_name+resource
-  // id is the idempotency key: a retried delivery of the same event is a
-  // no-op, and each distinct event for a resource still gets its own row.
-  const lsEventId = `${eventName}:${resourceId}`;
+  const eventId = lsEventId(payload);
 
-  const [existingEvent] = await db.select().from(webhookEvents).where(eq(webhookEvents.lsEventId, lsEventId));
+  const [existingEvent] = await db.select().from(webhookEvents).where(eq(webhookEvents.lsEventId, eventId));
   if (existingEvent) {
     return NextResponse.json({ ok: true, duplicate: true });
   }
 
   const [insertedEvent] = await db
     .insert(webhookEvents)
-    .values({ lsEventId, eventName, raw: payload })
+    .values({ lsEventId: eventId, eventName, raw: payload })
     .$returningId();
 
   try {
