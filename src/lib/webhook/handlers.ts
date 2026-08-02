@@ -41,6 +41,36 @@ export async function processWebhook(payload: LemonSqueezyPayload, deps: Webhook
   }
 }
 
+/**
+ * Re-runs an already-logged webhook event against the current handlers,
+ * without going through the dedupe check (the row exists by definition).
+ *
+ * This is the manual recovery path for an event that failed the first time —
+ * a Lemon Squeezy API blip during a renewal, say. Handlers are written to be
+ * safe to re-apply: purchases and subscriptions are looked up before insert,
+ * and tier/tierExpiresAt are computed from the payload rather than
+ * incremented, so a replay converges on the same state.
+ */
+export async function replayWebhookEvent(eventRowId: number, deps: WebhookDeps): Promise<ProcessResult> {
+  const row = await deps.store.findWebhookEventById(eventRowId);
+  if (!row) throw new Error(`No webhook_events row with id ${eventRowId}`);
+
+  const payload = row.raw as LemonSqueezyPayload;
+  if (!payload?.meta?.event_name) {
+    throw new Error(`webhook_events row ${eventRowId} has no usable raw payload to replay`);
+  }
+
+  try {
+    await handleEvent(payload.meta.event_name, payload, deps);
+    await deps.store.markWebhookEventProcessed(eventRowId);
+    return { status: "processed" };
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    await deps.store.markWebhookEventError(eventRowId, error.message);
+    return { status: "failed", error };
+  }
+}
+
 async function handleEvent(eventName: string, payload: LemonSqueezyPayload, deps: WebhookDeps) {
   switch (eventName) {
     case "order_created":
