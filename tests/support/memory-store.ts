@@ -37,6 +37,7 @@ export class MemoryStore implements WebhookStore {
   subscriptions: SubscriptionRecord[] = [];
   events: WebhookEventRecord[] = [];
   lsCustomerIds = new Map<number, string>();
+  rawById = new Map<number, unknown>();
 
   private nextId = 1;
   private id() {
@@ -135,13 +136,30 @@ export class MemoryStore implements WebhookStore {
     return this.events.find((e) => e.lsEventId === lsEventId) ?? null;
   }
 
-  async createWebhookEvent({ lsEventId, eventName }: { lsEventId: string; eventName: string }) {
+  async findWebhookEventById(id: number) {
+    const row = this.events.find((e) => e.id === id);
+    return row ? { ...row, raw: this.rawById.get(id) } : null;
+  }
+
+  async listRecentWebhookEvents(limit: number) {
+    return [...this.events].reverse().slice(0, limit);
+  }
+
+  async createWebhookEvent({ lsEventId, eventName, raw }: { lsEventId: string; eventName: string; raw: unknown }) {
     // Mirrors the unique index on webhook_events.ls_event_id.
     if (this.events.some((e) => e.lsEventId === lsEventId)) {
       throw new Error(`duplicate ls_event_id ${lsEventId}`);
     }
-    const row: WebhookEventRecord = { id: this.id(), lsEventId, eventName, processedAt: null, error: null };
+    const row: WebhookEventRecord = {
+      id: this.id(),
+      lsEventId,
+      eventName,
+      processedAt: null,
+      error: null,
+      createdAt: new Date(),
+    };
     this.events.push(row);
+    this.rawById.set(row.id, raw);
     return row.id;
   }
 

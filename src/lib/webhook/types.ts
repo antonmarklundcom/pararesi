@@ -49,6 +49,7 @@ export type WebhookEventRecord = {
   eventName: string;
   processedAt: Date | null;
   error: string | null;
+  createdAt?: Date;
 };
 
 /**
@@ -95,6 +96,9 @@ export interface WebhookStore {
   ): Promise<void>;
 
   findWebhookEventByLsId(lsEventId: string): Promise<WebhookEventRecord | null>;
+  findWebhookEventById(id: number): Promise<(WebhookEventRecord & { raw: unknown }) | null>;
+  /** Most recent first. Used by the admin webhook surface, not by the handlers. */
+  listRecentWebhookEvents(limit: number): Promise<WebhookEventRecord[]>;
   createWebhookEvent(input: { lsEventId: string; eventName: string; raw: unknown }): Promise<number>;
   markWebhookEventProcessed(id: number): Promise<void>;
   markWebhookEventError(id: number, error: string): Promise<void>;

@@ -1,4 +1,4 @@
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { webhookEvents, users, purchases, subscriptions } from "@/db/schema";
 import type { Tier } from "@/lib/tiers";
@@ -48,6 +48,7 @@ function toWebhookEvent(row: WebhookEventRow): WebhookEventRecord {
     eventName: row.eventName,
     processedAt: row.processedAt ?? null,
     error: row.error ?? null,
+    createdAt: row.createdAt,
   };
 }
 
@@ -124,6 +125,16 @@ export const drizzleWebhookStore: WebhookStore = {
   async findWebhookEventByLsId(lsEventId) {
     const [row] = await db.select().from(webhookEvents).where(eq(webhookEvents.lsEventId, lsEventId));
     return row ? toWebhookEvent(row) : null;
+  },
+
+  async findWebhookEventById(id) {
+    const [row] = await db.select().from(webhookEvents).where(eq(webhookEvents.id, id));
+    return row ? { ...toWebhookEvent(row), raw: row.raw } : null;
+  },
+
+  async listRecentWebhookEvents(limit) {
+    const rows = await db.select().from(webhookEvents).orderBy(desc(webhookEvents.id)).limit(limit);
+    return rows.map(toWebhookEvent);
   },
 
   async createWebhookEvent({ lsEventId, eventName, raw }) {
