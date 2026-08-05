@@ -1,0 +1,78 @@
+{
+  "_comment": "Shape reference for scripts/import-content.ts. Two modules and one of each other type, filled with obvious placeholder text. Copy this file, replace the content, keep the structure. Full field rules and the generation prompt: docs/08-content-spec.md",
+  "modules": [
+    {
+      "slug": "getting-started",
+      "title": "Getting Started",
+      "description": "What Paraguay residency is, who it suits, and how the process runs end to end.",
+      "sortOrder": 1,
+      "minTier": "guide",
+      "status": "published",
+      "lessons": [
+        {
+          "slug": "why-paraguay",
+          "title": "Why Paraguay",
+          "contentMd": "# Why Paraguay\n\nReplace this with 800-1200 words of real content.\n\n## What this lesson covers\n\n- Point one\n- Point two\n\n> Note: this is general information, not legal advice.\n",
+          "sortOrder": 1,
+          "status": "published"
+        },
+        {
+          "slug": "how-the-process-works",
+          "title": "How the Process Works",
+          "contentMd": "# How the Process Works\n\nReplace this with real content.\n",
+          "videoUrl": null,
+          "sortOrder": 2,
+          "status": "published"
+        }
+      ]
+    },
+    {
+      "slug": "insider-vault",
+      "title": "Insider Vault",
+      "description": "Deeper material kept for Insider members.",
+      "sortOrder": 9,
+      "minTier": "insider",
+      "status": "published",
+      "lessons": [
+        {
+          "slug": "advanced-topic",
+          "title": "An Advanced Topic",
+          "contentMd": "# An Advanced Topic\n\nInsider-only lesson body.\n",
+          "sortOrder": 1,
+          "status": "published"
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "title": "Document Checklist (PDF)",
+      "description": "Every document to gather, in the order you need them.",
+      "fileUrl": "https://example.com/replace-me/checklist.pdf",
+      "minTier": "guide",
+      "sortOrder": 1,
+      "status": "published"
+    }
+  ],
+  "updates": [
+    {
+      "title": "Fee schedule change — example entry",
+      "contentMd": "Replace with what changed, when it takes effect, and what a member should do about it.\n",
+      "minTier": "guide",
+      "publishedAt": "2026-08-01T09:00:00Z",
+      "status": "published"
+    }
+  ],
+  "blogPosts": [
+    {
+      "slug": "paraguay-residency-cost-breakdown",
+      "title": "What Paraguay Residency Actually Costs",
+      "excerpt": "A line-by-line breakdown of government fees, translations, and travel.",
+      "contentMd": "# What Paraguay Residency Actually Costs\n\nReplace with 1200-1800 words.\n",
+      "metaTitle": "Paraguay Residency Cost Breakdown (2026)",
+      "metaDescription": "Every fee involved in obtaining Paraguay residency, itemised, with what drives the total up or down.",
+      "publishedAt": "2026-08-01T09:00:00Z",
+      "status": "published"
+    }
+  ]
+}
