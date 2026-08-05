@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 
 # Next.js auto-generated (regenerated on every build/dev run)
 next-env.d.ts
+
+# Claude Code local tooling state (agent worktrees, session cache) — never repo content
+.claude/
