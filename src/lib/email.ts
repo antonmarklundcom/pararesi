@@ -1,6 +1,10 @@
 import { Resend } from "resend";
 
-export type EmailTemplate = "welcome-set-password" | "password-reset" | "payment-received";
+export type EmailTemplate =
+  | "welcome-set-password"
+  | "password-reset"
+  | "payment-received"
+  | "confirm-subscription";
 
 interface SendEmailArgs {
   to: string;
@@ -37,6 +41,16 @@ function renderEmail(template: EmailTemplate, data: Record<string, string>): { s
           <p>Hi${data.name ? ` ${data.name}` : ""},</p>
           <p>We've received your payment${data.productName ? ` for ${data.productName}` : ""}.</p>
           <p>Log in to your account to access it: <a href="${data.portalUrl}">${data.portalUrl}</a></p>
+        `,
+      };
+    case "confirm-subscription":
+      return {
+        subject: "Confirm your email to get the residency checklist",
+        html: `
+          <p>Hi${data.name ? ` ${data.name}` : ""},</p>
+          <p>Someone asked for the Paraguay residency document checklist with this address. If that was you, confirm below and we'll send it over:</p>
+          <p><a href="${data.confirmUrl}">${data.confirmUrl}</a></p>
+          <p>This link expires in 7 days. If you didn't request this, you can ignore this email — nothing else will be sent.</p>
         `,
       };
   }

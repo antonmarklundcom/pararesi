@@ -6,6 +6,7 @@ import { modules, lessons } from "@/db/schema";
 import { Container } from "@/components/ui/Container";
 import { BuyButton } from "@/components/marketing/BuyButton";
 import { Faq } from "@/components/marketing/Faq";
+import { LeadCaptureForm } from "@/components/marketing/LeadCaptureForm";
 import { productJsonLd, faqPageJsonLd } from "@/lib/seo";
 import { siteConfig } from "@/config/site";
 
@@ -193,6 +194,20 @@ export default async function GuidePage() {
           <div className="mt-6">
             <Faq items={faqItems} />
           </div>
+        </div>
+      </Container>
+
+      {/* Lead magnet — for visitors who aren't ready to buy today */}
+      <Container className="py-16">
+        <div className="rounded-2xl border border-brand-navy-900/10 bg-brand-green-50 p-8">
+          <h2 className="text-2xl font-semibold text-brand-navy-950">
+            Not ready yet? Start with the free document checklist
+          </h2>
+          <p className="mt-3 max-w-xl text-brand-navy-900/70">
+            Every document you need to gather before you start, in the order you&apos;ll be asked
+            for them. Free, by email — no purchase needed.
+          </p>
+          <LeadCaptureForm source="guide-page" />
         </div>
       </Container>
 

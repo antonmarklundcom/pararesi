@@ -124,7 +124,23 @@ Recommendation: **option 1** — no code change, protects both products, and a $
 price point sets a low-value anchor for a product whose subject matter (residency,
 banking, taxes) is high-stakes.
 
-### C2. 🔴 There is no email capture anywhere on the marketing site
+### C2. ✅ There is no email capture anywhere on the marketing site — **shipped 2026-08-05**
+
+Shipped: a double opt-in lead capture system. `leads` + `lead_tokens` tables
+(migration `drizzle/0001_curved_madelyne_pryor.sql`), a `LeadCaptureForm` on `/` and
+`/guide` offering the free document checklist, a `subscribeAction` that validates and
+rate-limits by email and IP and is idempotent per address, a `confirm-subscription`
+email through the existing Resend wrapper (single-use, hashed, 7-day token mirroring
+the password-token rules), a `/subscribe/confirm` page, a `"Lead captured"` Plausible
+event, and a read-only `/admin/leads` list with per-row delete so a removal request
+can be honoured. Unit tests cover validation, upsert idempotency, and token
+single-use/expiry.
+
+Still open, deliberately: the checklist PDF itself (owner content — add it to the
+Resources set in docs/09 §2), self-service unsubscribe, and the 4-email sequence
+below. Only confirmed, non-unsubscribed rows may ever be mailed.
+
+Original finding:
 
 For a $7–27 info product the list *is* the business, and right now the only way to
 enter the funnel is to buy immediately. Every visitor who is not ready today is lost

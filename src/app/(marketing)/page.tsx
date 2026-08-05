@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { ButtonLink } from "@/components/ui/Button";
+import { LeadCaptureForm } from "@/components/marketing/LeadCaptureForm";
 
 export const metadata: Metadata = {
   title: "Paraguay Residency Guide",
@@ -53,6 +54,19 @@ export default function HomePage() {
             </Link>
             .
           </p>
+        </div>
+      </Container>
+
+      <Container className="pb-16">
+        <div className="rounded-2xl border border-brand-navy-900/10 bg-brand-green-50 p-8">
+          <h2 className="text-2xl font-semibold text-brand-navy-950">
+            Get the free Paraguay residency document checklist
+          </h2>
+          <p className="mt-3 max-w-xl text-brand-navy-900/70">
+            Every document you need to gather before you start, in the order you&apos;ll be asked
+            for them. Free, by email — no purchase needed.
+          </p>
+          <LeadCaptureForm source="home-hero" />
         </div>
       </Container>
 

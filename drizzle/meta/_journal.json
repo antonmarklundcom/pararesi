@@ -8,6 +8,13 @@
       "when": 1784242928123,
       "tag": "0000_clean_darkhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1785964680052,
+      "tag": "0001_curved_madelyne_pryor",
+      "breakpoints": true
     }
   ]
 }

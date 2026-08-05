@@ -133,6 +133,33 @@ export const blogPosts = mysqlTable("blog_posts", {
   status: mysqlEnum("status", ["draft", "published"]).notNull().default("draft"),
 }, (table) => [uniqueIndex("blog_posts_slug_unique").on(table.slug)]);
 
+// --- Marketing leads (email capture / lead magnet) ---
+
+export const leads = mysqlTable("leads", {
+  id: int("id").autoincrement().primaryKey(),
+  // Always stored lowercased + trimmed (normalizeEmail in src/lib/leads.ts), so
+  // the unique index below is what makes the capture form idempotent.
+  email: varchar("email", { length: 255 }).notNull(),
+  // Where the signup came from, e.g. "home-hero" / "guide-page".
+  source: varchar("source", { length: 64 }).notNull(),
+  // Null until the double opt-in link is clicked — nothing may be mailed before then.
+  confirmedAt: datetime("confirmed_at"),
+  // Set when a lead opts out; a later unsubscribe link writes here.
+  unsubscribedAt: datetime("unsubscribed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+}, (table) => [uniqueIndex("leads_email_unique").on(table.email)]);
+
+export const leadTokens = mysqlTable("lead_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  leadId: int("lead_id").notNull(),
+  // sha256 of the raw token; only the raw token is ever sent by email.
+  tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+  expiresAt: datetime("expires_at").notNull(),
+  usedAt: datetime("used_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // --- Lemon Squeezy webhook log ---
 
 export const webhookEvents = mysqlTable("webhook_events", {
