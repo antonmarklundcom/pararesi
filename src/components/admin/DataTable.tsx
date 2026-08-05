@@ -14,7 +14,8 @@ export function DataTable<Row extends { id: number }>({
 }: {
   columns: Column<Row>[];
   rows: Row[];
-  editHref: (row: Row) => string;
+  /** Omit for read-only tables (e.g. leads) — the Edit link is then not rendered. */
+  editHref?: (row: Row) => string;
   emptyMessage?: string;
 }) {
   if (rows.length === 0) {
@@ -43,9 +44,11 @@ export function DataTable<Row extends { id: number }>({
                 </td>
               ))}
               <td className="px-4 py-3 text-right">
-                <Link href={editHref(row)} className="text-brand-green-600 hover:text-brand-green-700">
-                  Edit
-                </Link>
+                {editHref ? (
+                  <Link href={editHref(row)} className="text-brand-green-600 hover:text-brand-green-700">
+                    Edit
+                  </Link>
+                ) : null}
               </td>
             </tr>
           ))}
