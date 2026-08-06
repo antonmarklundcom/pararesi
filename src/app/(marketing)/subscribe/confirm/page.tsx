@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { confirmLeadByToken } from "@/lib/leads";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Confirm your email",
@@ -45,15 +46,36 @@ export default async function ConfirmSubscriptionPage({
     );
   }
 
+  const checklistUrl = siteConfig.leadMagnetChecklistUrl;
+
   return (
-    // TODO(owner): the checklist itself is not yet delivered by this app — send
-    // it (and any follow-up sequence) from your email tool using the confirmed
-    // leads in /admin/leads, or wire a delivery email here later.
     <Shell title="You're confirmed">
-      <p>
-        Thanks — your email is confirmed. We&apos;ll send you the Paraguay residency document
-        checklist, plus the occasional update when requirements or fees change.
-      </p>
+      {checklistUrl ? (
+        <>
+          <p>
+            Thanks — your email is confirmed. Here&apos;s your Paraguay residency document
+            checklist:
+          </p>
+          <p className="mt-4">
+            <a
+              href={checklistUrl}
+              className="inline-flex items-center rounded-full bg-brand-green-600 px-6 py-3 text-sm font-medium text-white hover:bg-brand-green-700"
+            >
+              Download the checklist
+            </a>
+          </p>
+          <p className="mt-4 text-sm">
+            We&apos;ll also send the occasional update when requirements or fees change.
+          </p>
+        </>
+      ) : (
+        // No checklist file wired up yet (siteConfig.leadMagnetChecklistUrl is
+        // still null) — say something true instead of promising a download.
+        <p>
+          Thanks — your email is confirmed. We&apos;ll be in touch with the Paraguay residency
+          document checklist, plus the occasional update when requirements or fees change.
+        </p>
+      )}
       <p className="mt-4">
         If you&apos;d rather not wait,{" "}
         <Link href="/guide" className="text-brand-green-600 hover:underline">
