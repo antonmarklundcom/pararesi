@@ -18,6 +18,14 @@ export const siteConfig = {
   /** TODO(owner): ISO date (e.g. "2026-08-02") the legal pages were last reviewed. */
   legalLastUpdated: "[SET LAST UPDATED DATE]",
 
+  /**
+   * TODO(owner): public URL of the free document-checklist PDF (the lead
+   * magnet promised by LeadCaptureForm). Leave null until the file exists —
+   * /subscribe/confirm falls back to a "we'll be in touch" message when unset,
+   * so nothing breaks or links to a 404 in the meantime.
+   */
+  leadMagnetChecklistUrl: null as string | null,
+
   // Insider subscription prices are already decided (docs/05) and live in code —
   // centralized here so /pricing and checkout copy can't drift out of sync.
   insiderMonthlyPrice: "$7",
