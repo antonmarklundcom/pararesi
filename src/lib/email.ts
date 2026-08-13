@@ -9,7 +9,9 @@ export type EmailTemplate =
   // confirmed, non-unsubscribed leads — see src/lib/nurture.ts.
   | "nurture-cost-breakdown"
   | "nurture-three-mistakes"
-  | "nurture-guide-offer";
+  | "nurture-guide-offer"
+  // Sent once per published update post, to the members entitled to read it.
+  | "update-published";
 
 interface SendEmailArgs {
   to: string;
@@ -122,6 +124,17 @@ function renderTemplate(template: EmailTemplate, data: Record<string, string>): 
           <p><a href="${data.guideUrl}">See what's inside</a></p>
           <p>If you'd rather keep researching it yourself, that's genuinely fine — the checklist you already have is the same one we use. This is just the shortcut.</p>
           <p style="font-size:12px;color:#6b7280">This is an independent information product, not legal or immigration advice.</p>
+        `,
+      };
+    case "update-published":
+      return {
+        subject: `New update: ${data.title}`,
+        html: `
+          <p>Hi${data.name ? ` ${data.name}` : ""},</p>
+          <p>There's a new update in your members area:</p>
+          <p><strong>${data.title}</strong></p>
+          <p><a href="${data.updatesUrl}">Read it in the portal</a></p>
+          <p style="font-size:12px;color:#6b7280">You're getting this because your membership includes the updates feed. Manage your subscription from your account page.</p>
         `,
       };
   }

@@ -171,7 +171,15 @@ mark three events: guide checkout started, insider checkout started, purchase
 completed. Ten minutes of work that determines whether every later copy decision is
 evidence-based or a guess.
 
-### C4. 🟠 Retention has no mechanism
+### C4. 🟠 Retention has no mechanism — **notification shipped 2026-08-13**
+
+Shipped: a "Notify members" button on each update post in /admin/updates, which
+mails everyone entitled to read it (same tier rule as the portal, lapsed insiders
+excluded) via the existing `sendEmail` wrapper. `updates_posts.notified_at` is
+stamped before the batch runs, so editing or re-publishing a post can never mail
+the list twice. Still owner work: actually writing the monthly post.
+
+Original finding:
 
 Insider's whole value is the updates feed, but nothing in the plan schedules content
 or notifies members that new material exists. Cheap and effective: a monthly

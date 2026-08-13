@@ -1,0 +1,1 @@
+ALTER TABLE `updates_posts` ADD `notified_at` datetime;

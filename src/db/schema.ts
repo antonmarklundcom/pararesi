@@ -117,6 +117,9 @@ export const updatesPosts = mysqlTable("updates_posts", {
   minTier: mysqlEnum("min_tier", ["guide", "insider"]).notNull().default("guide"),
   publishedAt: datetime("published_at"),
   status: mysqlEnum("status", ["draft", "published"]).notNull().default("draft"),
+  // When the "new update" notification email went out. Set once and never
+  // cleared, so editing or re-publishing a post can't mail members twice.
+  notifiedAt: datetime("notified_at"),
 });
 
 // --- Marketing blog ---
