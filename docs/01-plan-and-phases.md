@@ -125,11 +125,13 @@ That work now **is** phase 7's real content. Done so far:
 - **GDPR admin actions (Sonnet, part of B5's follow-up).** Export-user-as-JSON and
   hard-delete-user actions on `/admin/users`, closing the gap `/privacy` promises.
 
-**Still open, and still codeable without the owner:**
+- **Adversarial QA + security pass (Opus).** The discrete pass the original checklist
+  called for, over the auth, session, webhook, checkout, admin-authorization and
+  lead/email paths. 13 findings, 12 fixed with a regression test each; written up with
+  evidence, accepted risks, and the short list of things that genuinely need a live
+  database or Lemon Squeezy account, in **docs/qa-report-phase7.md**.
 
-- No `docs/qa-report-phase7.md` has been written, and the original checklist's
-  adversarial gating checks (verifying no lesson content leaks without a server tier
-  check, etc.) haven't been run as a discrete pass.
+**Still open, and still codeable without the owner:**
 - **C1 — pricing ladder.** docs/07 flags that Insider ($7/mo, includes everything)
   currently undercuts the Guide tripwire. Needs an explicit decision (see docs/07 §C1
   for the three options) before it's a code change.

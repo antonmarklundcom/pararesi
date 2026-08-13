@@ -36,6 +36,13 @@
       "when": 1786635628230,
       "tag": "0004_abandoned_big_bertha",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1786658464114,
+      "tag": "0005_confused_tyger_tiger",
+      "breakpoints": true
     }
   ]
 }

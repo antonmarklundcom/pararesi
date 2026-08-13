@@ -24,6 +24,13 @@ export type UserRecord = {
   name: string | null;
   tier: Tier;
   tierExpiresAt: Date | null;
+  /**
+   * Whether the account can actually be logged into yet. A user row is created
+   * by the first purchase webhook with no password at all, so a second purchase
+   * has to be able to tell "existing customer" from "existing customer who
+   * never followed the set-password link" — see handleOrderCreated.
+   */
+  hasPassword: boolean;
 };
 
 export type PurchaseRecord = {

@@ -20,6 +20,31 @@ interface SendEmailArgs {
 }
 
 /**
+ * Every template below interpolates straight into HTML, and several of the
+ * values are not ours: `name` is whatever the buyer typed into Lemon Squeezy's
+ * checkout, `title` is admin-authored, and the URLs are built from env vars.
+ * Escaping the whole data record once, here, is what makes that safe — an
+ * unescaped `name` of `<a href="…">` produces a working phishing link inside a
+ * genuine, correctly-signed transactional email from our own domain.
+ *
+ * Escaping applies to URLs too: `&` becomes `&amp;` in an href, which is the
+ * correct HTML encoding and is decoded back by every mail client, while the
+ * quote escaping is what stops a value breaking out of the attribute.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAll(data: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(data).map(([key, value]) => [key, escapeHtml(String(value ?? ""))]));
+}
+
+/**
  * Every email sent to a marketing lead (as opposed to a paying customer's
  * transactional mail) carries an unsubscribe link. Callers pass
  * `data.unsubscribeUrl` and this footer is appended automatically, so a new
@@ -33,15 +58,25 @@ function unsubscribeFooter(unsubscribeUrl: string): string {
         `;
 }
 
-function renderEmail(template: EmailTemplate, data: Record<string, string>): { subject: string; html: string } {
-  const { subject, html } = renderTemplate(template, data);
+export function renderEmail(
+  template: EmailTemplate,
+  data: Record<string, string>,
+): { subject: string; html: string } {
+  const safe = escapeAll(data);
+  // Subjects are plain text, so they take the raw values — escaping there would
+  // put a literal "&amp;" in the recipient's inbox list.
+  const { subject, html } = renderTemplate(template, safe, data);
   return {
     subject,
-    html: data.unsubscribeUrl ? `${html}${unsubscribeFooter(data.unsubscribeUrl)}` : html,
+    html: safe.unsubscribeUrl ? `${html}${unsubscribeFooter(safe.unsubscribeUrl)}` : html,
   };
 }
 
-function renderTemplate(template: EmailTemplate, data: Record<string, string>): { subject: string; html: string } {
+function renderTemplate(
+  template: EmailTemplate,
+  data: Record<string, string>,
+  raw: Record<string, string>,
+): { subject: string; html: string } {
   switch (template) {
     case "welcome-set-password":
       return {
@@ -128,7 +163,7 @@ function renderTemplate(template: EmailTemplate, data: Record<string, string>): 
       };
     case "update-published":
       return {
-        subject: `New update: ${data.title}`,
+        subject: `New update: ${raw.title}`,
         html: `
           <p>Hi${data.name ? ` ${data.name}` : ""},</p>
           <p>There's a new update in your members area:</p>

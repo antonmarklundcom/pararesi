@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { processWebhook } from "@/lib/webhook/handlers";
-import { fixture, harness, type TestHarness } from "./support/memory-store";
+import { fixture, harness, plusGraceDays, type TestHarness } from "./support/memory-store";
 
 const JANE = "jane.buyer@example.com";
 const SAM = "sam.insider@example.com";
@@ -128,5 +128,115 @@ describe("refunded purchases stop counting as entitlement", () => {
     await processWebhook(fixture("subscription_expired"), h.deps);
 
     expect(h.store.userByEmail(SAM).tier).toBe("guide");
+  });
+});
+
+/**
+ * Findings from the phase 7 adversarial pass (docs/qa-report-phase7.md). Each
+ * test below is named for the finding it pins down.
+ */
+describe("QA-07-F1: a subscription with no renews_at must not become lifetime insider", () => {
+  /**
+   * `tierExpiresAt: null` on an insider is not "expiry unknown", it is "never
+   * expires" — resolveEffectiveTier only downgrades a member it has a date to
+   * compare against. Lemon Squeezy reports renews_at as null on a subscription
+   * that will not renew, and those payloads still reach handleSubscriptionActive
+   * via subscription_resumed and subscription_payment_success.
+   */
+  it("falls back to ends_at when renews_at is null", async () => {
+    await processWebhook(fixture("subscription_created"), h.deps);
+
+    const resumed = fixture("subscription_resumed");
+    const attrs = resumed.data.attributes as Record<string, unknown>;
+    attrs.renews_at = null;
+    attrs.ends_at = "2026-09-01T00:00:00.000000Z";
+
+    await processWebhook(resumed, h.deps);
+
+    const sam = h.store.userByEmail(SAM);
+    expect(sam.tier).toBe("insider");
+    expect(sam.tierExpiresAt).toEqual(plusGraceDays("2026-09-01T00:00:00.000000Z"));
+  });
+
+  it("keeps the existing paid-through date when the payload carries neither date", async () => {
+    await processWebhook(fixture("subscription_created"), h.deps);
+    const before = h.store.userByEmail(SAM).tierExpiresAt;
+    expect(before).not.toBeNull();
+
+    const resumed = fixture("subscription_resumed");
+    const attrs = resumed.data.attributes as Record<string, unknown>;
+    attrs.renews_at = null;
+    attrs.ends_at = null;
+
+    await processWebhook(resumed, h.deps);
+
+    // Emphatically not null: null here would hand out unexpiring insider.
+    expect(h.store.userByEmail(SAM).tierExpiresAt).toEqual(before);
+  });
+});
+
+describe("QA-07-F3: expiry of one subscription must not revoke another", () => {
+  it("keeps insider when a second subscription is still active", async () => {
+    await processWebhook(fixture("subscription_created"), h.deps);
+    const sam = h.store.userByEmail(SAM);
+
+    // The member resubscribed, so a second row exists and is active. (The same
+    // shape arises when someone else's checkout is attributed to this account
+    // through checkout custom_data.)
+    await h.store.createSubscription({
+      userId: sam.id,
+      lsSubscriptionId: "2002",
+      status: "active",
+      renewsAt: new Date("2026-12-01T00:00:00.000Z"),
+      endsAt: null,
+    });
+
+    await processWebhook(fixture("subscription_expired"), h.deps);
+
+    const after = h.store.userByEmail(SAM);
+    expect(after.tier).toBe("insider");
+    // Re-anchored to the surviving subscription rather than left on the dead
+    // one's date, which would expire them within the grace window.
+    expect(after.tierExpiresAt).toEqual(plusGraceDays("2026-12-01T00:00:00.000Z"));
+  });
+
+  it("still downgrades when the expiring subscription was the only one", async () => {
+    await processWebhook(fixture("subscription_created"), h.deps);
+
+    await processWebhook(fixture("subscription_expired"), h.deps);
+
+    const after = h.store.userByEmail(SAM);
+    expect(after.tier).toBe("none");
+    expect(after.tierExpiresAt).toBeNull();
+  });
+});
+
+describe("QA-07-F5: a lost race to log the event is a duplicate, not a failure", () => {
+  /**
+   * findWebhookEventByLsId-then-insert is not atomic, and Lemon Squeezy can
+   * have two deliveries of one event in flight. The unique index rejects the
+   * loser; that used to escape processWebhook as an unhandled throw, so the
+   * winning delivery applied the event and the loser reported a 500 — inviting
+   * Lemon Squeezy to retry an event that had already been processed.
+   */
+  it("reports duplicate when the insert loses to a concurrent delivery", async () => {
+    const payload = fixture("order_created");
+    const store = h.store;
+    let raced = false;
+    const realCreate = store.createWebhookEvent.bind(store);
+
+    store.createWebhookEvent = async (input) => {
+      if (!raced) {
+        raced = true;
+        // The concurrent delivery landing between the lookup and this insert.
+        await realCreate(input);
+      }
+      return realCreate(input);
+    };
+
+    const result = await processWebhook(payload, h.deps);
+
+    expect(result.status).toBe("duplicate");
+    expect(store.events).toHaveLength(1);
   });
 });

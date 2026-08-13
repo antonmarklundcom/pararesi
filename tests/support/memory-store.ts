@@ -53,7 +53,16 @@ export class MemoryStore implements WebhookStore {
   }
 
   async createUser({ email, name }: { email: string; name: string | null }) {
-    const user: UserRecord = { id: this.id(), email, name, tier: "none", tierExpiresAt: null };
+    const user: UserRecord = {
+      id: this.id(),
+      email,
+      name,
+      tier: "none",
+      tierExpiresAt: null,
+      // A webhook-created account has no password until the set-password link
+      // is followed, same as the real users row.
+      hasPassword: false,
+    };
     this.users.push(user);
     return user;
   }

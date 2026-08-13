@@ -6,9 +6,10 @@ import { eq, and, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { users, subscriptions } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
+import { setUserPassword } from "@/lib/auth-flows";
+import { getSession } from "@/lib/session";
 import { getCustomerPortalUrl } from "@/lib/lemonsqueezy";
 
-const BCRYPT_COST = 12;
 const MIN_PASSWORD_LENGTH = 8;
 const ACTIVE_SUBSCRIPTION_STATUSES = ["active", "on_trial", "past_due"];
 
@@ -30,8 +31,16 @@ export async function changePasswordAction(
     return { error: `New password must be at least ${MIN_PASSWORD_LENGTH} characters.` };
   }
 
-  const passwordHash = await bcrypt.hash(newPassword, BCRYPT_COST);
-  await db.update(users).set({ passwordHash }).where(eq(users.id, user.id));
+  // Bumps session_epoch too, so every *other* device holding a session for this
+  // account is logged out — the reason most people change a password.
+  await setUserPassword(user.id, newPassword);
+
+  const [updated] = await db.select().from(users).where(eq(users.id, user.id));
+  if (updated) {
+    const session = await getSession();
+    session.epoch = updated.sessionEpoch;
+    await session.save();
+  }
 
   return { success: true };
 }
