@@ -155,6 +155,11 @@ export const leadTokens = mysqlTable("lead_tokens", {
   leadId: int("lead_id").notNull(),
   // sha256 of the raw token; only the raw token is ever sent by email.
   tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+  // Confirm tokens opt a lead in, unsubscribe tokens opt them out. Kept in one
+  // table but never interchangeable: consuming one purpose only invalidates the
+  // lead's other open tokens of that same purpose, so confirming an address
+  // doesn't quietly break the unsubscribe link in an email already delivered.
+  purpose: mysqlEnum("purpose", ["confirm", "unsubscribe"]).notNull().default("confirm"),
   expiresAt: datetime("expires_at").notNull(),
   usedAt: datetime("used_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

@@ -136,9 +136,13 @@ event, and a read-only `/admin/leads` list with per-row delete so a removal requ
 can be honoured. Unit tests cover validation, upsert idempotency, and token
 single-use/expiry.
 
+Self-service unsubscribe shipped 2026-08-13: `/unsubscribe?token=…` backed by a
+hashed, single-use `unsubscribe`-purpose lead token, minted per send, with a link
+in the footer of every outbound lead email.
+
 Still open, deliberately: the checklist PDF itself (owner content — add it to the
-Resources set in docs/09 §2), self-service unsubscribe, and the 4-email sequence
-below. Only confirmed, non-unsubscribed rows may ever be mailed.
+Resources set in docs/09 §2) and the 4-email sequence below. Only confirmed,
+non-unsubscribed rows may ever be mailed.
 
 Original finding:
 

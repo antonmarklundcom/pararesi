@@ -7,9 +7,9 @@ import { leads, leadTokens } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 
 /**
- * Removes a lead and any outstanding confirmation tokens. This is the v1
- * answer to "please take me off your list / delete my data" until self-service
- * unsubscribe exists — see docs/07 C2.
+ * Removes a lead and any outstanding tokens. Self-service unsubscribe
+ * (/unsubscribe) covers "stop mailing me"; this is the harder erasure — "delete
+ * my data" — which still needs a human.
  */
 export async function deleteLeadAction(id: number) {
   await requireAdmin();
