@@ -140,9 +140,14 @@ Self-service unsubscribe shipped 2026-08-13: `/unsubscribe?token=…` backed by 
 hashed, single-use `unsubscribe`-purpose lead token, minted per send, with a link
 in the footer of every outbound lead email.
 
+The 4-email sequence shipped 2026-08-13: day 0 is the checklist on
+/subscribe/confirm, then day 2 cost breakdown, day 4 three mistakes, day 6 guide
+offer, driven by a daily `POST /api/cron/nurture` (bearer `CRON_SECRET`) and
+de-duplicated by the `lead_emails` table.
+
 Still open, deliberately: the checklist PDF itself (owner content — add it to the
-Resources set in docs/09 §2) and the 4-email sequence below. Only confirmed,
-non-unsubscribed rows may ever be mailed.
+Resources set in docs/09 §2). Only confirmed, non-unsubscribed rows may ever be
+mailed.
 
 Original finding:
 
