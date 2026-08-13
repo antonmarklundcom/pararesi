@@ -29,7 +29,17 @@ export async function processWebhook(payload: LemonSqueezyPayload, deps: Webhook
   const existing = await store.findWebhookEventByLsId(eventId);
   if (existing) return { status: "duplicate" };
 
-  const rowId = await store.createWebhookEvent({ lsEventId: eventId, eventName, raw: payload });
+  // The check above is not atomic: Lemon Squeezy can have two deliveries of the
+  // same event in flight, and both can pass it. The unique index on
+  // webhook_events.ls_event_id is the real guard, so a failed insert is read as
+  // "someone else got there first" rather than escaping as an unhandled 500 —
+  // otherwise the winning delivery is processed and the loser reports failure.
+  let rowId: number;
+  try {
+    rowId = await store.createWebhookEvent({ lsEventId: eventId, eventName, raw: payload });
+  } catch {
+    return { status: "duplicate" };
+  }
 
   try {
     await handleEvent(eventName, payload, deps);
@@ -122,6 +132,11 @@ async function resolveUser(
   deps: WebhookDeps,
   knownUser?: UserRecord | null,
 ) {
+  // NOTE: `customData` is buyer-influenced, not server-authoritative — a Lemon
+  // Squeezy hosted checkout accepts `checkout[custom][...]` straight off the
+  // URL. Attributing a purchase to another account id is only ever a gift (the
+  // attacker is the one paying), so it stays trusted here; nothing that decides
+  // *what was bought* may come from it. See handleOrderCreated.
   const customUserId = customData?.userId;
   if (customUserId) {
     const existing = await deps.store.findUserById(Number(customUserId));
@@ -170,12 +185,18 @@ async function handleOrderCreated(payload: LemonSqueezyPayload, deps: WebhookDep
     await deps.store.updateUser(user.id, { lsCustomerId: String(attrs.customer_id) });
   }
 
-  // No silent fallback to "guide": a misconfigured LS_VARIANT_* env var used
-  // to downgrade an insider purchase to the cheaper product without a trace.
-  // Throwing records the event with an error and returns a 500, so Lemon
+  // Derived from the variant id alone, never from meta.custom_data: custom data
+  // rides in on the checkout URL, so a buyer can set it to anything. Taking
+  // `custom_data.productKey` on trust let a buyer pay for one variant and be
+  // granted the entitlement of another, and wrote the wrong product into the
+  // purchases ledger.
+  //
+  // No silent fallback to "guide" either: a misconfigured LS_VARIANT_* env var
+  // used to downgrade an insider purchase to the cheaper product without a
+  // trace. Throwing records the event with an error and returns a 500, so Lemon
   // Squeezy retries and the order can be applied once the mapping is fixed.
   const variantId = attrs.first_order_item.variant_id;
-  const productKey = payload.meta.custom_data?.productKey ?? deps.productKeyForVariantId(variantId);
+  const productKey = deps.productKeyForVariantId(variantId);
   if (!productKey) {
     throw new Error(
       `order_created ${orderId}: variant_id ${variantId} maps to no productKey. ` +
@@ -202,7 +223,10 @@ async function handleOrderCreated(payload: LemonSqueezyPayload, deps: WebhookDep
     await grantAtLeastTier(user.id, user.tier, "guide", deps);
   }
 
-  if (isNew) {
+  // A returning customer who never followed their first set-password link has
+  // no way into the portal, so "payment received, log in" is a dead end for
+  // them — they get a fresh set-password link instead.
+  if (isNew || !user.hasPassword) {
     await sendWelcomeEmail(user.id, email, name, deps);
   } else {
     await deps.sendEmail({
@@ -308,12 +332,20 @@ async function handleSubscriptionActive(
     });
   }
 
+  // `renews_at` is null on a subscription that won't renew (cancelled, or
+  // ending after the current period), and those payloads still arrive here via
+  // subscription_resumed / subscription_payment_success. Writing null into
+  // tierExpiresAt in that case is not "no expiry information", it is *lifetime
+  // insider*: resolveEffectiveTier only ever downgrades a member who has a date
+  // to compare against. Fall back to ends_at, and failing that keep whatever
+  // paid-through date the member already had rather than clearing it.
+  const paidThrough = renewsAt ?? endsAt;
   await deps.store.updateUser(user.id, {
     tier: "insider",
-    tierExpiresAt: renewsAt ? withGrace(renewsAt) : null,
+    tierExpiresAt: paidThrough ? withGrace(paidThrough) : (user.tierExpiresAt ?? null),
   });
 
-  if (isNew) {
+  if (isNew || !user.hasPassword) {
     await sendWelcomeEmail(user.id, email, name, deps);
   }
 }
@@ -389,6 +421,24 @@ async function handleSubscriptionEnded(payload: LemonSqueezyPayload, deps: Webho
 
   const user = await deps.store.findUserById(sub.userId);
   if (!user) return;
+
+  // Derived from everything the member still holds, not just their guide
+  // purchase: a member with a second, still-active subscription (they
+  // resubscribed, or someone else's checkout was attributed to their account
+  // via checkout custom data) must not be downgraded because an older
+  // subscription reached its end. The just-ended subscription is already
+  // written as expired above, so it cannot count towards this.
+  const otherActive = await deps.store.findActiveSubscriptionForUser(user.id);
+  if (otherActive) {
+    const paidThrough = otherActive.renewsAt ?? otherActive.endsAt;
+    await deps.store.updateUser(user.id, {
+      tier: "insider",
+      // Re-anchored to the surviving subscription, so the expired one's date
+      // can't strand them on an insider tier that expires immediately.
+      ...(paidThrough ? { tierExpiresAt: withGrace(paidThrough) } : {}),
+    });
+    return;
+  }
 
   const guidePurchase = await deps.store.findGuidePurchase(user.id);
   await deps.store.updateUser(user.id, { tier: guidePurchase ? "guide" : "none", tierExpiresAt: null });

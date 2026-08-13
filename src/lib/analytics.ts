@@ -36,6 +36,12 @@ export async function trackServerEvent(name: string, props?: AnalyticsEventProps
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, domain: d, url: `https://${d}/`, props }),
+      // The only caller on a hot path is the Lemon Squeezy webhook handler,
+      // which awaits this. Without a deadline, a Plausible outage that hangs
+      // rather than refusing the connection holds the webhook open until Lemon
+      // Squeezy gives up and retries — turning an analytics blip into a
+      // customer who paid and is waiting for access.
+      signal: AbortSignal.timeout(3000),
     });
   } catch {
     // Analytics must never affect the caller — e.g. a Plausible outage must

@@ -41,18 +41,69 @@ describe("order_created", () => {
     expect(h.tokens).toEqual([{ userId: jane.id, purpose: "set" }]);
   });
 
-  it("sends payment-received instead of a welcome email when the buyer already has an account", async () => {
-    await send("order_created");
-    h.emails.length = 0;
-
-    // A second, different order from the same email address.
+  /** A second, different order from the same email address. */
+  async function sendSecondOrder() {
     const second = fixture("order_created");
     second.data.id = "1099";
     (second.data.attributes as Record<string, unknown>).updated_at = "2026-07-18T00:00:00.000000Z";
     await processWebhook(second, h.deps);
+  }
+
+  it("sends payment-received instead of a welcome email when the buyer already has an account", async () => {
+    await send("order_created");
+    h.store.userByEmail(JANE).hasPassword = true; // they followed the first set-password link
+    h.emails.length = 0;
+
+    await sendSecondOrder();
 
     expect(h.store.users).toHaveLength(1);
     expect(h.emails.map((e) => e.template)).toEqual(["payment-received"]);
+  });
+
+  /**
+   * QA-07-F6. A user row is created by the first purchase webhook with no
+   * password. "Payment received — log in to your account" is a dead end for
+   * someone who has never had a password, so a second purchase re-sends the
+   * set-password link instead.
+   */
+  it("re-sends the set-password link when the returning buyer never set one", async () => {
+    await send("order_created");
+    h.emails.length = 0;
+    h.tokens.length = 0;
+
+    await sendSecondOrder();
+
+    const jane = h.store.userByEmail(JANE);
+    expect(h.store.users).toHaveLength(1);
+    expect(h.emails.map((e) => e.template)).toEqual(["welcome-set-password"]);
+    expect(h.tokens).toEqual([{ userId: jane.id, purpose: "set" }]);
+  });
+
+  /**
+   * QA-07-F2. A Lemon Squeezy hosted checkout accepts `checkout[custom][...]`
+   * straight off the URL, so meta.custom_data is buyer-controlled. It used to
+   * take priority over the variant mapping when deciding what was bought,
+   * which let a buyer pay for one product and be recorded as holding another.
+   */
+  it("ignores a custom_data productKey and derives the product from the variant id", async () => {
+    const forged = fixture("order_created");
+    forged.meta.custom_data = { ...forged.meta.custom_data, productKey: "insider-yearly" };
+
+    const result = await processWebhook(forged, h.deps);
+
+    expect(result.status).toBe("processed");
+    expect(h.store.purchases[0]!.productKey).toBe("guide");
+  });
+
+  it("still fails loudly when the variant maps to nothing, rather than trusting custom_data", async () => {
+    const forged = fixture("order_created");
+    forged.meta.custom_data = { ...forged.meta.custom_data, productKey: "guide" };
+    (forged.data.attributes.first_order_item as Record<string, unknown>).variant_id = "9999";
+
+    const result = await processWebhook(forged, h.deps);
+
+    expect(result.status).toBe("failed");
+    expect(h.store.purchases).toHaveLength(0);
   });
 });
 

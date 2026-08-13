@@ -25,6 +25,11 @@ export const users = mysqlTable("users", {
   // Null = lifetime/one-time (guide tier). Set for insider subscriptions.
   tierExpiresAt: datetime("tier_expires_at"),
   lsCustomerId: varchar("ls_customer_id", { length: 64 }),
+  // Bumped every time the password changes. Sessions carry the value they were
+  // issued under, so raising it logs every existing session out — see
+  // src/lib/session.ts. iron-session keeps no server-side session state, so
+  // without this a stolen cookie survives a password reset for its full 30 days.
+  sessionEpoch: int("session_epoch").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 }, (table) => [uniqueIndex("users_email_unique").on(table.email)]);

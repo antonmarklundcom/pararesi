@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { eq, and, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { users, purchases } from "@/db/schema";
-import { getSession } from "./session";
+import { getSession, sessionEpochMatches } from "./session";
 import { TIER_RANK, resolveEffectiveTier, type Tier } from "./tiers";
 
 export { TIER_RANK, type Tier };
@@ -13,7 +13,14 @@ export async function getCurrentUser(): Promise<UserRow | null> {
   if (!session.userId) return null;
 
   const [user] = await db.select().from(users).where(eq(users.id, session.userId));
-  return user ?? null;
+  if (!user) return null;
+
+  // A session issued before the account's last password change is no longer a
+  // session. Checked here rather than in middleware because middleware has no
+  // database access — and because this is the function every gate goes through.
+  if (!sessionEpochMatches(session.epoch, user.sessionEpoch)) return null;
+
+  return user;
 }
 
 /**

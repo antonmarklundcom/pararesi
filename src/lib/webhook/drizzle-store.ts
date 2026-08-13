@@ -23,6 +23,7 @@ function toUser(row: UserRow): UserRecord {
     name: row.name ?? null,
     tier: row.tier as Tier,
     tierExpiresAt: row.tierExpiresAt ?? null,
+    hasPassword: Boolean(row.passwordHash),
   };
 }
 

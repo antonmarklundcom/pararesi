@@ -11,7 +11,25 @@ import { getIronSession, type SessionOptions } from "iron-session";
 export type SessionData = {
   userId: number;
   role: "admin" | "member";
+  /**
+   * The `users.session_epoch` this session was issued under. Changing a
+   * password bumps that column, which is what makes every other session for
+   * that account stop working — there is no server-side session store to
+   * delete from, the cookie *is* the session.
+   */
+  epoch?: number;
 };
+
+/**
+ * Whether a session cookie is still valid for the account it names.
+ *
+ * Sessions minted before this column existed carry no epoch at all; they are
+ * treated as epoch 0, which is the default every existing row already has, so
+ * shipping this doesn't log the whole userbase out.
+ */
+export function sessionEpochMatches(sessionEpoch: number | undefined, userSessionEpoch: number): boolean {
+  return (sessionEpoch ?? 0) === userSessionEpoch;
+}
 
 function getSessionSecret() {
   const secret = process.env.SESSION_SECRET;
