@@ -9,7 +9,10 @@ export type FieldConfig =
   | { type: "select"; name: string; label: string; options: { value: string; label: string }[] }
   | { type: "datetime"; name: string; label: string };
 
-export type EntityFormValues = Record<string, string | number | Date | null | undefined>;
+// Booleans are accepted so a whole row can be handed straight to
+// `initialValues` — the form has no checkbox field type, so such a column is
+// simply not rendered, which is the right default for one nothing here edits.
+export type EntityFormValues = Record<string, string | number | boolean | Date | null | undefined>;
 
 function toDatetimeLocalValue(value: unknown): string {
   if (!value) return "";

@@ -35,8 +35,10 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-brand-navy-950">How we use it</h2>
             <p className="mt-2">
               To create and manage your account, deliver purchased content, send
-              transactional emails (purchase receipts, password reset links, update
-              notifications for Insider members), and improve the guide.
+              transactional emails (purchase receipts, password reset links), and improve the
+              guide. Notifications about new updates are separate and optional — you can turn
+              them off on your account page at any time without affecting your access or your
+              account emails.
             </p>
           </section>
 

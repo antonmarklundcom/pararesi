@@ -80,3 +80,23 @@ describe("renderEmail escaping", () => {
     expect(html).toContain('href="https://example.test/set-password?token=abc123"');
   });
 });
+
+/**
+ * Member email consent: the notification has to carry the way out of it, the
+ * same way every lead email carries an unsubscribe link.
+ */
+describe("update-published opt-out link", () => {
+  it("links to the account page where the notification can be turned off", () => {
+    const { html } = renderEmail("update-published", {
+      title: "New fee schedule",
+      name: "Sam",
+      updatesUrl: "https://example.test/portal/updates",
+      accountUrl: "https://example.test/portal/account",
+    });
+
+    expect(html).toContain('href="https://example.test/portal/account"');
+    expect(html).toContain("turn these emails off");
+    // And says the obvious thing, so nobody reads the opt-out as cancelling.
+    expect(html).toContain("without losing access");
+  });
+});

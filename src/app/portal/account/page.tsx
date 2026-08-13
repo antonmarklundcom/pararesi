@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { purchases, subscriptions } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { ChangePasswordForm } from "./ChangePasswordForm";
+import { EmailPreferencesForm } from "./EmailPreferencesForm";
 import { manageSubscriptionAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -77,6 +78,13 @@ export default async function PortalAccountPage() {
               </div>
             ))
           )}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-medium text-brand-navy-900">Emails</p>
+        <div className="mt-3">
+          <EmailPreferencesForm updateEmailsEnabled={user.updateEmailsEnabled} />
         </div>
       </div>
 

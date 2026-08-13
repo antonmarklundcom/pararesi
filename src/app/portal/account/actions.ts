@@ -45,6 +45,29 @@ export async function changePasswordAction(
   return { success: true };
 }
 
+export type EmailPreferencesState = { success?: boolean } | undefined;
+
+/**
+ * The member's own opt-out for the "new update published" notification.
+ *
+ * Deliberately scoped to that one email. Transactional mail — set-password,
+ * password reset, payment received — is not covered by this and is never
+ * suppressed: it is how someone reaches an account they paid for, and there is
+ * no version of "I'd rather not know my card was charged" worth honouring.
+ */
+export async function updateEmailPreferencesAction(
+  _prevState: EmailPreferencesState,
+  formData: FormData,
+): Promise<EmailPreferencesState> {
+  const user = await requireUser();
+
+  // An unchecked checkbox submits nothing at all, so absence is the opt-out.
+  const enabled = formData.get("updateEmailsEnabled") !== null;
+  await db.update(users).set({ updateEmailsEnabled: enabled }).where(eq(users.id, user.id));
+
+  return { success: true };
+}
+
 export async function manageSubscriptionAction() {
   const user = await requireUser();
 

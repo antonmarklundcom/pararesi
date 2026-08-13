@@ -1,5 +1,6 @@
 import {
   mysqlTable,
+  boolean,
   int,
   varchar,
   text,
@@ -30,6 +31,12 @@ export const users = mysqlTable("users", {
   // src/lib/session.ts. iron-session keeps no server-side session state, so
   // without this a stolen cookie survives a password reset for its full 30 days.
   sessionEpoch: int("session_epoch").notNull().default(0),
+  // Consent for non-transactional member mail — today that is only the
+  // "new update published" notification. Defaults to on: it's the feed the
+  // Insider tier is sold on, and every message carries a link to this setting.
+  // Transactional mail (set-password, reset, payment received) ignores this
+  // column entirely — see src/lib/update-notify.ts.
+  updateEmailsEnabled: boolean("update_emails_enabled").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 }, (table) => [uniqueIndex("users_email_unique").on(table.email)]);
