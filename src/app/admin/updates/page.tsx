@@ -33,6 +33,10 @@ export default async function AdminUpdatesPage() {
               header: "Published",
               render: (r) => (r.publishedAt ? new Date(r.publishedAt).toLocaleDateString() : "—"),
             },
+            {
+              header: "Notified",
+              render: (r) => (r.notifiedAt ? new Date(r.notifiedAt).toLocaleDateString() : "—"),
+            },
           ]}
         />
       </div>
