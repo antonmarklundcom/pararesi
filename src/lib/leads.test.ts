@@ -5,6 +5,7 @@ import {
   leadRateLimitKeys,
   normalizeEmail,
   normalizeSource,
+  unsubscribeLeadByToken,
   upsertLead,
   type LeadRecord,
   type LeadSource,
@@ -12,6 +13,8 @@ import {
 } from "./leads";
 import {
   createLeadConfirmToken,
+  createLeadUnsubscribeToken,
+  type LeadTokenPurpose,
   type LeadTokenRecord,
   type LeadTokenStore,
 } from "./lead-tokens";
@@ -27,9 +30,11 @@ class MemoryLeadTokenStore implements LeadTokenStore {
     return this.rows.find((r) => r.tokenHash === tokenHash) ?? null;
   }
 
-  async markAllUsedForLead(leadId: number, usedAt: Date) {
+  async markAllUsedForLead(leadId: number, purpose: LeadTokenPurpose, usedAt: Date) {
     for (const row of this.rows) {
-      if (row.leadId === leadId && row.usedAt === null) row.usedAt = usedAt;
+      if (row.leadId === leadId && row.purpose === purpose && row.usedAt === null) {
+        row.usedAt = usedAt;
+      }
     }
   }
 }
@@ -73,6 +78,11 @@ class MemoryLeadStore implements LeadStore {
       row.confirmedAt = confirmedAt;
       row.unsubscribedAt = null;
     }
+  }
+
+  async markUnsubscribed(id: number, unsubscribedAt: Date) {
+    const row = this.rows.find((r) => r.id === id);
+    if (row) row.unsubscribedAt = unsubscribedAt;
   }
 }
 
@@ -229,5 +239,106 @@ describe("confirmLeadByToken", () => {
     leadStore.rows = [];
 
     expect(await confirmLeadByToken(token, leadStore, tokenStore)).toBeNull();
+  });
+});
+
+describe("unsubscribeLeadByToken", () => {
+  async function confirmedLead(email = "ana@example.com") {
+    const { lead } = await upsertLead(email, "home-hero", leadStore);
+    await leadStore.markConfirmed(lead.id, new Date("2026-01-01T00:00:00Z"));
+    return lead;
+  }
+
+  it("records the opt-out for a valid token", async () => {
+    const lead = await confirmedLead();
+    const token = await createLeadUnsubscribeToken(lead.id, tokenStore);
+
+    const result = await unsubscribeLeadByToken(token, leadStore, tokenStore);
+
+    expect(result?.email).toBe("ana@example.com");
+    expect(leadStore.rows[0].unsubscribedAt).toBeInstanceOf(Date);
+  });
+
+  it("keeps the consent record — unsubscribing is not a deletion", async () => {
+    const lead = await confirmedLead();
+    const token = await createLeadUnsubscribeToken(lead.id, tokenStore);
+
+    await unsubscribeLeadByToken(token, leadStore, tokenStore);
+
+    expect(leadStore.rows[0].confirmedAt).toEqual(new Date("2026-01-01T00:00:00Z"));
+  });
+
+  it("is idempotent: clicking the same link twice still confirms, without moving the timestamp", async () => {
+    const lead = await confirmedLead();
+    const token = await createLeadUnsubscribeToken(lead.id, tokenStore);
+
+    await unsubscribeLeadByToken(token, leadStore, tokenStore);
+    const firstUnsubscribedAt = leadStore.rows[0].unsubscribedAt;
+
+    const second = await unsubscribeLeadByToken(token, leadStore, tokenStore);
+
+    expect(second?.email).toBe("ana@example.com");
+    expect(leadStore.rows[0].unsubscribedAt).toEqual(firstUnsubscribedAt);
+  });
+
+  it("is idempotent across emails: an older email's link also just confirms", async () => {
+    const lead = await confirmedLead();
+    const fromDay0 = await createLeadUnsubscribeToken(lead.id, tokenStore);
+    const fromDay2 = await createLeadUnsubscribeToken(lead.id, tokenStore);
+
+    await unsubscribeLeadByToken(fromDay2, leadStore, tokenStore);
+    const result = await unsubscribeLeadByToken(fromDay0, leadStore, tokenStore);
+
+    expect(result?.email).toBe("ana@example.com");
+  });
+
+  it("does not opt out someone who resubscribed after using this link", async () => {
+    const lead = await confirmedLead();
+    const token = await createLeadUnsubscribeToken(lead.id, tokenStore);
+
+    await unsubscribeLeadByToken(token, leadStore, tokenStore);
+    // They came back through the double opt-in, which clears unsubscribedAt.
+    await leadStore.markConfirmed(lead.id, new Date());
+
+    expect(await unsubscribeLeadByToken(token, leadStore, tokenStore)).toBeNull();
+    expect(leadStore.rows[0].unsubscribedAt).toBeNull();
+  });
+
+  it("rejects a garbage token", async () => {
+    expect(await unsubscribeLeadByToken("nope", leadStore, tokenStore)).toBeNull();
+  });
+
+  it("rejects a confirm token — one link cannot do the other's job", async () => {
+    const lead = await confirmedLead();
+    const token = await createLeadConfirmToken(lead.id, tokenStore);
+
+    expect(await unsubscribeLeadByToken(token, leadStore, tokenStore)).toBeNull();
+    expect(leadStore.rows[0].unsubscribedAt).toBeNull();
+  });
+
+  it("rejects an expired token", async () => {
+    const lead = await confirmedLead();
+    const token = await createLeadUnsubscribeToken(lead.id, tokenStore);
+    tokenStore.rows[0].expiresAt = new Date(Date.now() - 1000);
+
+    expect(await unsubscribeLeadByToken(token, leadStore, tokenStore)).toBeNull();
+  });
+
+  it("rejects a token whose lead row has since been deleted", async () => {
+    const lead = await confirmedLead();
+    const token = await createLeadUnsubscribeToken(lead.id, tokenStore);
+    leadStore.rows = [];
+
+    expect(await unsubscribeLeadByToken(token, leadStore, tokenStore)).toBeNull();
+  });
+
+  it("only touches the lead the token belongs to", async () => {
+    const mine = await confirmedLead("ana@example.com");
+    await confirmedLead("bo@example.com");
+    const token = await createLeadUnsubscribeToken(mine.id, tokenStore);
+
+    await unsubscribeLeadByToken(token, leadStore, tokenStore);
+
+    expect(leadStore.rows[1].unsubscribedAt).toBeNull();
   });
 });

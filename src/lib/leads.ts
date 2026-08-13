@@ -1,7 +1,12 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { leads } from "@/db/schema";
-import { consumeLeadConfirmToken, type LeadTokenStore, drizzleLeadTokenStore } from "@/lib/lead-tokens";
+import {
+  consumeLeadConfirmToken,
+  consumeLeadUnsubscribeToken,
+  type LeadTokenStore,
+  drizzleLeadTokenStore,
+} from "@/lib/lead-tokens";
 
 /**
  * Where a signup came from. A closed set rather than free text: the value
@@ -57,6 +62,8 @@ export interface LeadStore {
   updateSource(id: number, source: LeadSource): Promise<void>;
   /** Records the double opt-in, and clears any earlier unsubscribe. */
   markConfirmed(id: number, confirmedAt: Date): Promise<void>;
+  /** Records an opt-out. Never clears `confirmedAt` — the consent history stays. */
+  markUnsubscribed(id: number, unsubscribedAt: Date): Promise<void>;
 }
 
 function toRecord(row: typeof leads.$inferSelect): LeadRecord {
@@ -93,6 +100,10 @@ export const drizzleLeadStore: LeadStore = {
 
   async markConfirmed(id, confirmedAt) {
     await db.update(leads).set({ confirmedAt, unsubscribedAt: null }).where(eq(leads.id, id));
+  },
+
+  async markUnsubscribed(id, unsubscribedAt) {
+    await db.update(leads).set({ unsubscribedAt }).where(eq(leads.id, id));
   },
 };
 
@@ -157,4 +168,36 @@ export async function confirmLeadByToken(
   await leadStore.markConfirmed(lead.id, confirmedAt);
 
   return { ...lead, confirmedAt, unsubscribedAt: null };
+}
+
+/**
+ * Consumes an unsubscribe token and records the opt-out.
+ *
+ * Idempotent in both directions: a second click on the same link (or on the
+ * link from a different email in the same sequence) returns the lead unchanged
+ * rather than erroring or overwriting the original `unsubscribedAt`, so the
+ * page can show the same plain confirmation every time. Only a token that was
+ * never valid — or one whose lead has since resubscribed — is reported as bad.
+ */
+export async function unsubscribeLeadByToken(
+  rawToken: string,
+  leadStore: LeadStore = drizzleLeadStore,
+  tokenStore: LeadTokenStore = drizzleLeadTokenStore,
+): Promise<LeadRecord | null> {
+  const result = await consumeLeadUnsubscribeToken(rawToken, tokenStore);
+  if (result.status === "invalid") return null;
+
+  const lead = await leadStore.findById(result.leadId);
+  if (!lead) return null;
+
+  if (lead.unsubscribedAt) return lead;
+
+  // A spent token plus a lead who is not unsubscribed means they opted back in
+  // after using this link. Don't silently opt them out again on a stale click.
+  if (result.status === "already-used") return null;
+
+  const unsubscribedAt = new Date();
+  await leadStore.markUnsubscribed(lead.id, unsubscribedAt);
+
+  return { ...lead, unsubscribedAt };
 }

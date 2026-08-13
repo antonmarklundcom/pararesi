@@ -1,0 +1,1 @@
+ALTER TABLE `lead_tokens` ADD `purpose` enum('confirm','unsubscribe') DEFAULT 'confirm' NOT NULL;

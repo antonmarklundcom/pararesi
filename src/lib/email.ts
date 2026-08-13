@@ -12,7 +12,29 @@ interface SendEmailArgs {
   data: Record<string, string>;
 }
 
+/**
+ * Every email sent to a marketing lead (as opposed to a paying customer's
+ * transactional mail) carries an unsubscribe link. Callers pass
+ * `data.unsubscribeUrl` and this footer is appended automatically, so a new
+ * template can't accidentally ship without one — see src/lib/lead-email.ts.
+ */
+function unsubscribeFooter(unsubscribeUrl: string): string {
+  return `
+          <p style="margin-top:32px;font-size:12px;color:#6b7280">
+            Don&rsquo;t want these? <a href="${unsubscribeUrl}">Unsubscribe</a> — one click, no questions.
+          </p>
+        `;
+}
+
 function renderEmail(template: EmailTemplate, data: Record<string, string>): { subject: string; html: string } {
+  const { subject, html } = renderTemplate(template, data);
+  return {
+    subject,
+    html: data.unsubscribeUrl ? `${html}${unsubscribeFooter(data.unsubscribeUrl)}` : html,
+  };
+}
+
+function renderTemplate(template: EmailTemplate, data: Record<string, string>): { subject: string; html: string } {
   switch (template) {
     case "welcome-set-password":
       return {

@@ -1,6 +1,6 @@
 "use server";
 
-import { sendEmail } from "@/lib/email";
+import { appUrl, sendLeadEmail } from "@/lib/lead-email";
 import { createLeadConfirmToken } from "@/lib/lead-tokens";
 import {
   isPlausibleEmail,
@@ -45,8 +45,9 @@ export async function subscribeAction(
   // would be a way to send them an email on demand.
   if (status !== "confirmed") {
     const token = await createLeadConfirmToken(lead.id);
-    const confirmUrl = `${process.env.APP_URL ?? "http://localhost:3000"}/subscribe/confirm?token=${token}`;
-    await sendEmail({
+    const confirmUrl = `${appUrl()}/subscribe/confirm?token=${token}`;
+    await sendLeadEmail({
+      leadId: lead.id,
       to: lead.email,
       template: "confirm-subscription",
       data: { confirmUrl, name: "" },
