@@ -198,8 +198,9 @@ a $7 subscription will be brutal.
 - **Spanish version of the marketing site** — the audience researching Paraguayan
   residency skews EN, but ES doubles the SEO surface at low marginal cost once the
   content exists.
-- **Dunning surface**: when a subscription goes `past_due`, show an in-portal banner
-  linking to the LS customer portal. Recovers revenue LS's own emails miss.
+- **Dunning surface** — **shipped 2026-08-13**: a `past_due` subscription now shows a
+  banner on every /portal page linking to the Lemon Squeezy customer portal via the
+  existing `manageSubscriptionAction`.
 
 ### C6. 🟡 Process improvement for the remaining phases
 
