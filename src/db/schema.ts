@@ -165,6 +165,19 @@ export const leadTokens = mysqlTable("lead_tokens", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+/**
+ * One row per nurture email actually sent to a lead. The unique index is the
+ * no-double-send guarantee: the cron endpoint is safe to run twice, and a
+ * crash between sending and recording can at worst re-send once, never loop.
+ */
+export const leadEmails = mysqlTable("lead_emails", {
+  id: int("id").autoincrement().primaryKey(),
+  leadId: int("lead_id").notNull(),
+  // A NURTURE_STEPS key from src/lib/nurture.ts, e.g. "cost-breakdown".
+  step: varchar("step", { length: 64 }).notNull(),
+  sentAt: timestamp("sent_at").notNull().defaultNow(),
+}, (table) => [uniqueIndex("lead_emails_lead_id_step_unique").on(table.leadId, table.step)]);
+
 // --- Lemon Squeezy webhook log ---
 
 export const webhookEvents = mysqlTable("webhook_events", {

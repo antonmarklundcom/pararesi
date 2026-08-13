@@ -4,7 +4,12 @@ export type EmailTemplate =
   | "welcome-set-password"
   | "password-reset"
   | "payment-received"
-  | "confirm-subscription";
+  | "confirm-subscription"
+  // The C2 nurture sequence. Only ever sent by the cron endpoint, and only to
+  // confirmed, non-unsubscribed leads — see src/lib/nurture.ts.
+  | "nurture-cost-breakdown"
+  | "nurture-three-mistakes"
+  | "nurture-guide-offer";
 
 interface SendEmailArgs {
   to: string;
@@ -73,6 +78,50 @@ function renderTemplate(template: EmailTemplate, data: Record<string, string>): 
           <p>Someone asked for the Paraguay residency document checklist with this address. If that was you, confirm below and we'll send it over:</p>
           <p><a href="${data.confirmUrl}">${data.confirmUrl}</a></p>
           <p>This link expires in 7 days. If you didn't request this, you can ignore this email — nothing else will be sent.</p>
+        `,
+      };
+    // --- Nurture sequence (day 2 / 4 / 6 after confirmation) ---
+    //
+    // Deliberately free of specific fee figures: official costs change, and an
+    // email nobody can update after it's sent is the worst place to put a
+    // number. The structure is the useful part; the current figures live in the
+    // guide, which does get updated.
+    case "nurture-cost-breakdown":
+      return {
+        subject: "What Paraguay residency actually costs",
+        html: `
+          <p>Most cost questions about Paraguayan residency get answered with one number, which is why the answers never agree. It isn't one number — it's five line items:</p>
+          <ol>
+            <li><strong>Documents from home.</strong> Birth certificate, police record, and any marriage certificate — plus apostilles on each, and a sworn translation once they're in Paraguay.</li>
+            <li><strong>Official fees.</strong> The filing itself, paid in-country, in stages rather than all at once.</li>
+            <li><strong>Your proof of means.</strong> Whichever route you file under, this is money that has to sit somewhere provable, not money that's spent.</li>
+            <li><strong>Help on the ground.</strong> Optional, and the widest-ranging item of the five: it depends entirely on how much of the running around you do yourself.</li>
+            <li><strong>Being there.</strong> Flights and somewhere to stay for the appointments that need you in person.</li>
+          </ol>
+          <p>The first and last are the ones people underestimate. Documents expire — a police record that sat in a drawer for six months can be too old by the time it's filed, and paying for it twice is the most common avoidable cost in the whole process.</p>
+          <p>More on the timing traps in a couple of days.</p>
+        `,
+      };
+    case "nurture-three-mistakes":
+      return {
+        subject: "Three mistakes that add months to a residency file",
+        html: `
+          <p>None of these are exotic. They're just the ones that come up again and again:</p>
+          <p><strong>1. Getting documents apostilled in the wrong order.</strong> An apostille certifies the document underneath it, so anything reissued afterwards invalidates the work. Reissue first, apostille last, translate in Paraguay.</p>
+          <p><strong>2. Letting a validity window run out.</strong> Several of the documents you need have a shelf life, and it starts ticking at issue, not at filing. Collecting everything early feels organised right up to the point where the first item expires while you wait on the last.</p>
+          <p><strong>3. Treating one forum post as current.</strong> Requirements and fees change, and old threads don't come with a date stamp on the advice. If a step matters, check it against something maintained.</p>
+          <p>The pattern behind all three is the same: it's a sequencing problem, not a paperwork problem. Do it in the wrong order and you pay for the same documents twice.</p>
+        `,
+      };
+    case "nurture-guide-offer":
+      return {
+        subject: "The whole process, in one place",
+        html: `
+          <p>Over the last few emails we've covered what residency costs and where the timeline usually goes wrong. Both are pieces of the same thing: the order you do it in.</p>
+          <p>That's what the guide is — the whole process laid out step by step, in order, with the document checklist, the cost and timeline breakdown, and lifetime access to the members portal so updates don't cost extra.</p>
+          <p><a href="${data.guideUrl}">See what's inside</a></p>
+          <p>If you'd rather keep researching it yourself, that's genuinely fine — the checklist you already have is the same one we use. This is just the shortcut.</p>
+          <p style="font-size:12px;color:#6b7280">This is an independent information product, not legal or immigration advice.</p>
         `,
       };
   }

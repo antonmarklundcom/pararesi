@@ -40,9 +40,18 @@ LS_VARIANT_INSIDER_YEARLY=
 RESEND_API_KEY=
 EMAIL_FROM=                 # e.g. "Paraguay Residency Guide <hello@yourdomain.com>"
 
+# --- Cron (daily POST to /api/cron/nurture) ---
+CRON_SECRET=                # openssl rand -hex 32; unset = nurture sequence never runs
+
 # --- Seed scripts only (not needed at runtime) ---
 ADMIN_EMAIL=
 ADMIN_PASSWORD=
+```
+
+Hostinger cron entry (daily, any hour):
+
+```
+curl -sS -X POST -H "Authorization: Bearer $CRON_SECRET" https://YOURDOMAIN/api/cron/nurture
 ```
 
 Rules: never commit `.env`; changing the DB password in hPanel means updating the
