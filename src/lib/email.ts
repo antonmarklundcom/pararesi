@@ -169,7 +169,7 @@ function renderTemplate(
           <p>There's a new update in your members area:</p>
           <p><strong>${data.title}</strong></p>
           <p><a href="${data.updatesUrl}">Read it in the portal</a></p>
-          <p style="font-size:12px;color:#6b7280">You're getting this because your membership includes the updates feed. Manage your subscription from your account page.</p>
+          <p style="font-size:12px;color:#6b7280">You're getting this because your membership includes the updates feed. You can <a href="${data.accountUrl}">turn these emails off</a> without losing access to it.</p>
         `,
       };
   }

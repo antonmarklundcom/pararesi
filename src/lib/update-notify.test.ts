@@ -29,6 +29,7 @@ function member(overrides: Partial<NotifiableMember> = {}): NotifiableMember {
     name: null,
     tier: "insider",
     tierExpiresAt: TOMORROW,
+    updateEmailsEnabled: true,
     ...overrides,
   };
 }
@@ -131,6 +132,65 @@ describe("updateNotifyRecipients", () => {
     );
 
     expect(recipients.map((r) => r.id)).toEqual([1, 2]);
+  });
+
+  /**
+   * Member email consent. Entitlement is not consent: paying for the updates
+   * feed says a member may read it, not that they want an email whenever it
+   * changes. Only this notification is affected — transactional mail does not
+   * go through updateNotifyRecipients at all.
+   */
+  it("leaves out an entitled member who turned update emails off", () => {
+    const recipients = updateNotifyRecipients(
+      [member({ id: 1, updateEmailsEnabled: false })],
+      post(),
+      NOW,
+    );
+
+    expect(recipients).toEqual([]);
+  });
+
+  it("applies the opt-out independently of tier", () => {
+    const recipients = updateNotifyRecipients(
+      [
+        member({ id: 1, updateEmailsEnabled: true }),
+        member({ id: 2, updateEmailsEnabled: false }),
+        member({ id: 3, tier: "guide", tierExpiresAt: null, updateEmailsEnabled: true }),
+        member({ id: 4, tier: "guide", tierExpiresAt: null, updateEmailsEnabled: false }),
+      ],
+      post({ minTier: "guide" }),
+      NOW,
+    );
+
+    expect(recipients.map((m) => m.id)).toEqual([1, 3]);
+  });
+
+  it("does not mail an opted-out member even on a post their tier covers exactly", () => {
+    const recipients = updateNotifyRecipients(
+      [member({ id: 1, tier: "insider", updateEmailsEnabled: false })],
+      post({ minTier: "insider" }),
+      NOW,
+    );
+
+    expect(recipients).toEqual([]);
+  });
+
+  it("keeps the opt-out and the entitlement check independent — neither rescues the other", () => {
+    // Opted in but lapsed: still excluded, because consent is not access.
+    const lapsedButWilling = updateNotifyRecipients(
+      [member({ id: 1, tierExpiresAt: YESTERDAY, updateEmailsEnabled: true })],
+      post(),
+      NOW,
+    );
+    expect(lapsedButWilling).toEqual([]);
+
+    // Entitled but opted out: still excluded, because access is not consent.
+    const entitledButUnwilling = updateNotifyRecipients(
+      [member({ id: 2, updateEmailsEnabled: false })],
+      post(),
+      NOW,
+    );
+    expect(entitledButUnwilling).toEqual([]);
   });
 
   it("returns nobody when there are no members", () => {

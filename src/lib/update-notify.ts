@@ -45,10 +45,18 @@ export type NotifiableMember = {
   name: string | null;
   tier: Tier;
   tierExpiresAt: Date | null;
+  /**
+   * `users.update_emails_enabled` — the member's own choice, set on
+   * /portal/account. Applies to this notification and nothing else: password,
+   * purchase and payment mail is transactional and is sent regardless.
+   */
+  updateEmailsEnabled: boolean;
 };
 
 /**
  * The members who should be emailed about a post.
+ *
+ * Two independent gates, and a member has to pass both.
  *
  * Access is the same rule the portal uses, so nobody is told about content
  * they'd be shown a locked teaser for: a lapsed insider whose `tierExpiresAt`
@@ -57,6 +65,12 @@ export type NotifiableMember = {
  * worst case is that a lapsed insider who also bought the guide is left out of
  * one guide-tier notification, which is better than mailing someone who has
  * lost access.
+ *
+ * Consent is the member's own setting. Entitlement is not consent: paying for
+ * the updates feed says they may read it in the portal, not that they want an
+ * email every time it changes. This is the same principle the lead side has
+ * had since the unsubscribe work — it was only the member side that had no
+ * way out.
  */
 export function updateNotifyRecipients(
   members: readonly NotifiableMember[],
@@ -66,6 +80,8 @@ export function updateNotifyRecipients(
   const required = TIER_RANK[post.minTier];
 
   return members.filter((member) => {
+    if (!member.updateEmailsEnabled) return false;
+
     const tier = resolveEffectiveTier({
       tier: member.tier,
       tierExpiresAt: member.tierExpiresAt,

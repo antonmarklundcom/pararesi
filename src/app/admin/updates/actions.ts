@@ -82,18 +82,21 @@ export async function notifyUpdatesPostAction(id: number) {
       name: user.name ?? null,
       tier: user.tier as Tier,
       tierExpiresAt: user.tierExpiresAt ?? null,
+      updateEmailsEnabled: user.updateEmailsEnabled,
     })),
     post,
     now,
   );
 
   const updatesUrl = `${appUrl()}/portal/updates`;
+  // Every notification carries the way out of it, the same way lead mail does.
+  const accountUrl = `${appUrl()}/portal/account`;
   for (const recipient of recipients) {
     try {
       await sendEmail({
         to: recipient.email,
         template: "update-published",
-        data: { title: post.title, name: recipient.name ?? "", updatesUrl },
+        data: { title: post.title, name: recipient.name ?? "", updatesUrl, accountUrl },
       });
     } catch (error) {
       // One bad address shouldn't stop the rest of the list.
