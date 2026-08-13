@@ -8,6 +8,11 @@ import { Container } from "@/components/ui/Container";
 export const metadata: Metadata = {
   title: "Blog",
   description: "Articles on Paraguay residency requirements, costs, and updates.",
+  alternates: {
+    types: {
+      "application/rss+xml": "/blog/rss.xml",
+    },
+  },
 };
 
 export const dynamic = "force-dynamic";
