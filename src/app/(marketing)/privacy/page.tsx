@@ -71,9 +71,11 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-brand-navy-950">Your rights</h2>
             <p className="mt-2">
-              You can request a copy of your data or ask us to delete your account by contacting
-              us. [PLACEHOLDER — add specific GDPR/CCPA language if applicable to your buyer
-              base.]
+              You can request a copy of the data we hold about you, ask us to correct it, or ask
+              us to delete your account at any time. To do so, email us at{" "}
+              {siteConfig.contactEmail} from the address on your account, and we&apos;ll respond
+              within a reasonable time. Deleting your account removes your access to purchased
+              content.
             </p>
           </section>
 

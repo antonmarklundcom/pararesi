@@ -3,20 +3,20 @@
 // Fill in each TODO(owner) field below — that's the only edit needed before launch.
 
 export const siteConfig = {
-  /** TODO(owner): set the one-time Guide price, e.g. "$27". */
-  guidePrice: "[SET GUIDE PRICE]",
+  // Discounted from the $97 anchor price — owner decision, see docs/07 §C1.
+  guidePrice: "$7",
+  guideOriginalPrice: "$97",
 
-  /** TODO(owner): legal entity name that operates this business (for Terms). */
-  legalEntityName: "[SET LEGAL ENTITY NAME]",
+  legalEntityName: "Paraguay Residency Guide",
 
   /** TODO(owner): support/contact email shown on Terms, Privacy, Refund Policy. */
   contactEmail: "[SET CONTACT EMAIL]",
 
-  /** TODO(owner): refund window in days for the one-time Guide purchase. */
+  // The Guide is a final-sale, no-refunds product — an owner decision, not an
+  // unset field. 0 means "no refunds"; see /refund-policy.
   refundWindowDays: 0,
 
-  /** TODO(owner): ISO date (e.g. "2026-08-02") the legal pages were last reviewed. */
-  legalLastUpdated: "[SET LAST UPDATED DATE]",
+  legalLastUpdated: "2026-08-14",
 
   /**
    * TODO(owner): public URL of the free document-checklist PDF (the lead
