@@ -18,13 +18,9 @@ export const siteConfig = {
 
   legalLastUpdated: "2026-08-14",
 
-  /**
-   * TODO(owner): public URL of the free document-checklist PDF (the lead
-   * magnet promised by LeadCaptureForm). Leave null until the file exists —
-   * /subscribe/confirm falls back to a "we'll be in touch" message when unset,
-   * so nothing breaks or links to a 404 in the meantime.
-   */
-  leadMagnetChecklistUrl: null as string | null,
+  // Public URL of the free document-checklist PDF (the lead magnet promised
+  // by LeadCaptureForm), served as a static asset from public/downloads.
+  leadMagnetChecklistUrl: "/downloads/paraguay-residency-document-checklist.pdf" as string | null,
 
   // Insider subscription prices are already decided (docs/05) and live in code —
   // centralized here so /pricing and checkout copy can't drift out of sync.

@@ -145,9 +145,10 @@ The 4-email sequence shipped 2026-08-13: day 0 is the checklist on
 offer, driven by a daily `POST /api/cron/nurture` (bearer `CRON_SECRET`) and
 de-duplicated by the `lead_emails` table.
 
-Still open, deliberately: the checklist PDF itself (owner content — add it to the
-Resources set in docs/09 §2). Only confirmed, non-unsubscribed rows may ever be
-mailed.
+The checklist PDF itself shipped 2026-08-14: `public/downloads/paraguay-residency-document-checklist.pdf`,
+wired up via `siteConfig.leadMagnetChecklistUrl`, so `/subscribe/confirm` now links
+it directly instead of the "we'll be in touch" fallback. Only confirmed,
+non-unsubscribed rows may ever be mailed.
 
 Original finding:
 
