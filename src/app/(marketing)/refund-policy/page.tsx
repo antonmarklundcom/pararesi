@@ -25,13 +25,10 @@ export default function RefundPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold text-brand-navy-950">The Guide (one-time purchase)</h2>
             <p className="mt-2">
-              If the Guide isn&apos;t useful to you, contact us within{" "}
-              <strong>
-                {siteConfig.refundWindowDays > 0
-                  ? `${siteConfig.refundWindowDays} days`
-                  : "[SET REFUND WINDOW]"}
-              </strong>{" "}
-              of purchase for a full refund. After that window, purchases are final.
+              All Guide purchases are <strong>final sale</strong>. Because you get instant, full
+              access to the entire course the moment you buy, we don&apos;t offer refunds once a
+              purchase is complete. Please review the guide contents and FAQ before buying if
+              you&apos;re unsure whether it&apos;s right for you.
             </p>
           </section>
 
@@ -41,17 +38,7 @@ export default function RefundPolicyPage() {
               You can cancel your Insider subscription at any time from your account page.
               Cancelling stops future billing, but you keep access through the end of the period
               you already paid for — cancelling does not itself trigger a refund for the current
-              period. If you believe you were charged in error, contact us.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-brand-navy-950">How to request a refund</h2>
-            <p className="mt-2">
-              Email {siteConfig.contactEmail} with your order number (from your purchase
-              receipt). Refunds are processed back to your original payment method by Lemon
-              Squeezy, our merchant of record, and typically appear within [PLACEHOLDER —
-              e.g. 5–10 business days].
+              period, and past subscription charges are likewise final.
             </p>
           </section>
 
