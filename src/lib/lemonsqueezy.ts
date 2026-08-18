@@ -1,31 +1,19 @@
-export type ProductKey = "guide" | "insider-monthly" | "insider-yearly";
+import { env, LS_VARIANT_VARS, requireFeatureValue, type LsVariantKey } from "@/config/env";
 
-function variantEnvVar(productKey: ProductKey): string | undefined {
-  switch (productKey) {
-    case "guide":
-      return process.env.LS_VARIANT_GUIDE;
-    case "insider-monthly":
-      return process.env.LS_VARIANT_INSIDER_MONTHLY;
-    case "insider-yearly":
-      return process.env.LS_VARIANT_INSIDER_YEARLY;
-  }
-}
+export type ProductKey = LsVariantKey;
 
-const ALL_PRODUCT_KEYS: ProductKey[] = ["guide", "insider-monthly", "insider-yearly"];
+const ALL_PRODUCT_KEYS = Object.keys(LS_VARIANT_VARS) as ProductKey[];
 
+/** Throws naming the missing LS_VARIANT_* variable and where to find its value. */
 export function variantIdForProductKey(productKey: ProductKey): string {
-  const variantId = variantEnvVar(productKey);
-  if (!variantId) {
-    throw new Error(`No Lemon Squeezy variant id configured for productKey "${productKey}"`);
-  }
-  return variantId;
+  return requireFeatureValue(LS_VARIANT_VARS[productKey]);
 }
 
 /** Maps an incoming webhook's variant_id back to our internal productKey. */
 export function productKeyForVariantId(variantId: string | number): ProductKey | null {
   const id = String(variantId);
   for (const key of ALL_PRODUCT_KEYS) {
-    if (variantEnvVar(key) === id) return key;
+    if (env.lsVariantId(key) === id) return key;
   }
   return null;
 }
@@ -40,11 +28,8 @@ interface CreateCheckoutArgs {
 
 /** Creates a Lemon Squeezy hosted checkout and returns its URL. Server-only. */
 export async function createCheckoutUrl({ productKey, email, userId }: CreateCheckoutArgs): Promise<string> {
-  const apiKey = process.env.LEMONSQUEEZY_API_KEY;
-  const storeId = process.env.LEMONSQUEEZY_STORE_ID;
-  if (!apiKey || !storeId) {
-    throw new Error("LEMONSQUEEZY_API_KEY and LEMONSQUEEZY_STORE_ID must be set.");
-  }
+  const apiKey = requireFeatureValue("LEMONSQUEEZY_API_KEY");
+  const storeId = requireFeatureValue("LEMONSQUEEZY_STORE_ID");
 
   const variantId = variantIdForProductKey(productKey);
 
@@ -97,10 +82,7 @@ export async function createCheckoutUrl({ productKey, email, userId }: CreateChe
 export async function fetchSubscriptionResource(
   lsSubscriptionId: string,
 ): Promise<{ id: string; type: string; attributes: Record<string, unknown> }> {
-  const apiKey = process.env.LEMONSQUEEZY_API_KEY;
-  if (!apiKey) {
-    throw new Error("LEMONSQUEEZY_API_KEY must be set.");
-  }
+  const apiKey = requireFeatureValue("LEMONSQUEEZY_API_KEY");
 
   const res = await fetch(`https://api.lemonsqueezy.com/v1/subscriptions/${lsSubscriptionId}`, {
     headers: {
@@ -129,10 +111,7 @@ export async function fetchSubscriptionResource(
  * fetched on demand — never stored from an old webhook payload.
  */
 export async function getCustomerPortalUrl(lsSubscriptionId: string): Promise<string> {
-  const apiKey = process.env.LEMONSQUEEZY_API_KEY;
-  if (!apiKey) {
-    throw new Error("LEMONSQUEEZY_API_KEY must be set.");
-  }
+  const apiKey = requireFeatureValue("LEMONSQUEEZY_API_KEY");
 
   const res = await fetch(`https://api.lemonsqueezy.com/v1/subscriptions/${lsSubscriptionId}`, {
     headers: {

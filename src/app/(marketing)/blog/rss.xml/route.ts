@@ -1,8 +1,9 @@
 import { eq, desc } from "drizzle-orm";
+import { env } from "@/config/env";
 import { db } from "@/db";
 import { blogPosts } from "@/db/schema";
 
-const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
+const APP_URL = env.appUrl();
 const SITE_TITLE = "Paraguay Residency Guide Blog";
 const SITE_DESCRIPTION = "Articles on Paraguay residency requirements, costs, and timelines.";
 

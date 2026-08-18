@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { runNurtureBatch, type NurtureRunDeps } from "./nurture-run";
+import { runNurtureBatch, type NurtureRunDeps, type NurtureRunResult } from "./nurture-run";
 import type { NurtureLead, NurtureStep } from "./nurture";
 
 const CONFIRMED_AT = new Date("2026-08-01T09:00:00Z");
@@ -20,6 +20,7 @@ class FakeRun implements NurtureRunDeps {
   sentLog: { leadId: number; step: string }[] = [];
   recorded = new Map<number, string[]>();
   failFor = new Set<number>();
+  runs: NurtureRunResult[] = [];
 
   constructor(
     private leads: NurtureLead[],
@@ -38,6 +39,10 @@ class FakeRun implements NurtureRunDeps {
   async send(lead: NurtureLead, step: NurtureStep) {
     if (this.failFor.has(lead.id)) throw new Error("resend blew up");
     this.sentLog.push({ leadId: lead.id, step: step.key });
+  }
+
+  async recordRun(result: NurtureRunResult) {
+    this.runs.push(result);
   }
 
   async recordSent(leadId: number, stepKey: string) {
@@ -126,5 +131,34 @@ describe("runNurtureBatch", () => {
     run.failFor.clear();
     expect(await runNurtureBatch(run)).toEqual({ eligible: 1, sent: 1, failed: 0 });
     expect(run.sentLog).toContainEqual({ leadId: 1, step: "cost-breakdown" });
+  });
+
+  it("records every run, including one that had nothing to send", async () => {
+    // This is the liveness signal /admin/leads reads: a cron that fired and
+    // found nothing must look different from a cron that never fired.
+    const run = new FakeRun([lead(1)], CONFIRMED_AT);
+
+    expect(await runNurtureBatch(run)).toEqual({ eligible: 0, sent: 0, failed: 0 });
+    expect(run.runs).toEqual([{ eligible: 0, sent: 0, failed: 0 }]);
+
+    run.advanceDays(2);
+    await runNurtureBatch(run);
+
+    expect(run.runs).toEqual([
+      { eligible: 0, sent: 0, failed: 0 },
+      { eligible: 1, sent: 1, failed: 0 },
+    ]);
+  });
+
+  it("still reports a successful run when recording the run itself fails", async () => {
+    // The emails are already sent; losing the liveness row must not turn a good
+    // run into a 500 that invites the cron to retry it.
+    const run = new FakeRun([lead(1)], new Date(CONFIRMED_AT.getTime() + 2 * DAY_MS));
+    run.recordRun = async () => {
+      throw new Error("insert failed");
+    };
+
+    expect(await runNurtureBatch(run)).toEqual({ eligible: 1, sent: 1, failed: 0 });
+    expect(run.sentLog).toHaveLength(1);
   });
 });

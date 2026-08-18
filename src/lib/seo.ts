@@ -1,4 +1,6 @@
-const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
+import { env } from "@/config/env";
+
+const APP_URL = env.appUrl();
 
 export function productJsonLd({
   name,

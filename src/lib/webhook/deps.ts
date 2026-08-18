@@ -1,3 +1,4 @@
+import { env } from "@/config/env";
 import { fetchSubscriptionResource, productKeyForVariantId } from "@/lib/lemonsqueezy";
 import { createPasswordToken } from "@/lib/tokens";
 import { sendEmail } from "@/lib/email";
@@ -18,6 +19,6 @@ export function productionWebhookDeps(): WebhookDeps {
     createPasswordToken,
     productKeyForVariantId,
     fetchSubscription: fetchSubscriptionResource,
-    appUrl: process.env.APP_URL ?? "http://localhost:3000",
+    appUrl: env.appUrl(),
   };
 }

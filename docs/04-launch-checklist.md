@@ -20,6 +20,14 @@ mismatches after DB password changes, tsx/.env, npm PATH over SSH).
 
 ## 2. Environment variables (.env.example is the source of truth)
 
+Every variable is declared once in `src/config/env.ts`, which classifies it as
+**required-in-production** (the server refuses to boot without it),
+**required-for-a-feature** (unset ⇒ that feature is off) or **optional**, and is
+the only place the app reads `process.env` for these values. A production boot
+missing `APP_URL`, `SESSION_SECRET` or `DATABASE_URL` dies at start-up with the
+variable name and where the value comes from, rather than serving pages that
+point at localhost.
+
 ```bash
 # --- App ---
 APP_URL=                    # canonical https URL, no trailing slash (used in emails, checkout redirects, sitemap)
@@ -42,6 +50,9 @@ EMAIL_FROM=                 # e.g. "Paraguay Residency Guide <hello@yourdomain.c
 
 # --- Cron (daily POST to /api/cron/nurture) ---
 CRON_SECRET=                # openssl rand -hex 32; unset = nurture sequence never runs
+
+# --- Optional ---
+GIT_COMMIT_SHA=            # stamp the deployed commit; reported by GET /api/health
 
 # --- Seed scripts only (not needed at runtime) ---
 ADMIN_EMAIL=
@@ -66,6 +77,7 @@ live app's env var **immediately** (known crash pattern per deploy skill).
    with Remote MySQL IP whitelisted).
 4. `npx tsx scripts/seed-admin.ts` (remember: scripts load .env via dotenv/config).
 5. Optionally seed demo content for review; delete before launch.
+   **Run the pre-flight here — see below.**
 6. Smoke test: home page, /login as admin, /admin CRUD, /portal with a test member.
 7. Point the domain / subdomain; confirm HTTPS.
 8. Create the LS webhook: URL `https://<domain>/api/webhooks/lemonsqueezy`,
@@ -76,6 +88,32 @@ live app's env var **immediately** (known crash pattern per deploy skill).
 9. **LS test mode end-to-end:** buy guide with a test card → webhook fires → user
    created → set-password email arrives (Resend) → login → content unlocked. Then
    subscribe → insider unlock. Then cancel → downgrade. Check webhookEvents rows.
+
+### Pre-flight
+
+`scripts/preflight.ts` checks a deployment's configuration against the outside
+world before anyone can be hurt by it. Run it **at step 5 above**, from the slot
+(or from a machine whose IP is whitelisted for Remote MySQL):
+
+```bash
+npx tsx scripts/preflight.ts            # config + database + Lemon Squeezy + Resend
+npx tsx scripts/preflight.ts --offline  # config only, no network calls
+npx tsx scripts/preflight.ts --live     # also GETs APP_URL/api/health
+```
+
+It checks: every declared env var against its classification; the database is
+reachable and its migrations are applied; each `LS_VARIANT_*` id actually
+resolves through the Lemon Squeezy API (and warns when a **test-mode** API key
+is paired with a live `APP_URL` — the test-variant-ids-in-live-env trap in §4
+below); the Resend key is accepted and `EMAIL_FROM`'s domain is verified there;
+`SESSION_SECRET`'s length; `APP_URL` is https with no trailing slash;
+`CRON_SECRET` is set. It prints a pass/fail table, exits non-zero on any
+failure, and never prints a secret's value — the output is safe to paste into an
+issue.
+
+**Run it again after go-live**, with `--live`, once the domain is pointed and the
+Lemon Squeezy store is switched to live mode: that is the run that catches live
+variant ids that were never swapped and a `test_mode` API key on a live domain.
 
 ## 4. Phase 9 — Content & go-live checklist
 
@@ -90,7 +128,12 @@ live app's env var **immediately** (known crash pattern per deploy skill).
 - [ ] OG images render (check with a share debugger)
 - [ ] Admin password is strong and unique; SESSION_SECRET is production-random
 - [ ] Backup plan: enable Hostinger DB backups; note restore steps
-- [ ] Uptime monitor pointed at / and /api/webhooks/lemonsqueezy host
+- [ ] Uptime monitor pointed at `/api/health` — it returns 200 with
+      `{ ok, db, migrations, commit }` when the database answers and 503 when it
+      doesn't, so a dead database pages someone instead of showing a cached home page
+- [ ] `npx tsx scripts/preflight.ts --live` re-run after go-live, all green
+- [ ] Nurture cron confirmed live: `/admin/leads` shows a recent "last run / N sent"
+      rather than "no run recorded yet"
 
 ## 5. Post-launch (backlog, not launch blockers)
 

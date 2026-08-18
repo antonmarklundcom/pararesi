@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { env } from "@/config/env";
 import { runNurtureBatch } from "@/lib/nurture-run";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
  * day finds nothing left to send.
  */
 export async function POST(request: Request) {
-  const secret = process.env.CRON_SECRET;
+  const secret = env.cronSecret();
   if (!secret) {
     // Fail closed rather than run unauthenticated. Deliberately the same body
     // as a bad token: an unconfigured deployment shouldn't be discoverable.

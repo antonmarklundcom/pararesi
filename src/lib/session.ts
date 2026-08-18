@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { getIronSession, type SessionOptions } from "iron-session";
+import { env } from "@/config/env";
 
 /**
  * Deliberately minimal. `role` is here because middleware gates /admin before
@@ -31,18 +32,10 @@ export function sessionEpochMatches(sessionEpoch: number | undefined, userSessio
   return (sessionEpoch ?? 0) === userSessionEpoch;
 }
 
-function getSessionSecret() {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret || secret.length < 32) {
-    throw new Error("SESSION_SECRET must be set to a string of 32+ characters");
-  }
-  return secret;
-}
-
 export function getSessionOptions(): SessionOptions {
   return {
     cookieName: "pararesi_session",
-    password: getSessionSecret(),
+    password: env.sessionSecret(),
     cookieOptions: {
       httpOnly: true,
       sameSite: "lax",

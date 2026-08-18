@@ -3,7 +3,9 @@ import { desc, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { leads, leadEmails } from "@/db/schema";
 import { DataTable } from "@/components/admin/DataTable";
+import { NurtureCronCard } from "@/components/admin/NurtureCronCard";
 import { DeleteButton } from "@/components/admin/DeleteButton";
+import { nurtureCronStatus } from "@/lib/cron-status";
 import { deleteLeadAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -23,6 +25,7 @@ const NURTURE_STEP_LABELS: Record<string, string> = {
 
 export default async function AdminLeadsPage() {
   const rows = await db.select().from(leads).orderBy(desc(leads.createdAt));
+  const cronStatus = await nurtureCronStatus();
 
   const sentEmailsByLeadId = new Map<number, { step: string; sentAt: Date }[]>();
   if (rows.length > 0) {
@@ -49,6 +52,9 @@ export default async function AdminLeadsPage() {
         {rows.length} total · {confirmedCount} confirmed. Only confirmed, non-unsubscribed
         addresses may be mailed.
       </p>
+      <div className="mt-6">
+        <NurtureCronCard status={cronStatus} />
+      </div>
       <div className="mt-6">
         <DataTable
           rows={rows}
