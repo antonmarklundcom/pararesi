@@ -1,9 +1,10 @@
+import { env } from "@/config/env";
 import { sendEmail, type EmailTemplate } from "@/lib/email";
 import { createLeadUnsubscribeToken, type LeadTokenStore, drizzleLeadTokenStore } from "@/lib/lead-tokens";
 
 /** Public base URL of the app. Same fallback the rest of the app uses in dev. */
 export function appUrl(): string {
-  return process.env.APP_URL ?? "http://localhost:3000";
+  return env.appUrl();
 }
 
 export function unsubscribeUrlForToken(rawToken: string): string {

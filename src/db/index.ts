@@ -1,5 +1,6 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
+import { env } from "@/config/env";
 import * as schema from "./schema";
 
 declare global {
@@ -12,7 +13,7 @@ declare global {
 function getPool() {
   if (!global.__dbPool) {
     global.__dbPool = mysql.createPool({
-      uri: process.env.DATABASE_URL,
+      uri: env.databaseUrl(),
       connectionLimit: 8,
       timezone: "Z",
     });

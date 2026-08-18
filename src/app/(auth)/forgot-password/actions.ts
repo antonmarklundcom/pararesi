@@ -1,6 +1,7 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import { env } from "@/config/env";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { createPasswordToken } from "@/lib/tokens";
@@ -35,7 +36,7 @@ export async function forgotPasswordAction(
 
   if (user) {
     const token = await createPasswordToken(user.id, "reset");
-    const resetUrl = `${process.env.APP_URL ?? "http://localhost:3000"}/reset-password?token=${token}`;
+    const resetUrl = `${env.appUrl()}/reset-password?token=${token}`;
     await sendEmail({
       to: user.email,
       template: "password-reset",

@@ -10,6 +10,7 @@ import {
   json,
   timestamp,
   uniqueIndex,
+  index,
   primaryKey,
 } from "drizzle-orm/mysql-core";
 
@@ -204,3 +205,24 @@ export const webhookEvents = mysqlTable("webhook_events", {
   raw: json("raw"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [uniqueIndex("webhook_events_ls_event_id_unique").on(table.lsEventId)]);
+
+// --- Scheduled job liveness ---
+
+/**
+ * One row per completed nurture cron run.
+ *
+ * A cron that never fires is otherwise invisible: nothing is sent, nothing
+ * errors, and /admin/leads looks exactly the same as a cron that ran and found
+ * nothing due. Recording every run turns "no emails went out" into a question
+ * the admin page can answer — the schedule is broken, or there was nothing to
+ * send. Rows are small and one a day, so they are never pruned.
+ */
+export const cronRuns = mysqlTable("cron_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  // Which schedule ran; "nurture" is the only one today.
+  job: varchar("job", { length: 64 }).notNull(),
+  eligible: int("eligible").notNull().default(0),
+  sent: int("sent").notNull().default(0),
+  failed: int("failed").notNull().default(0),
+  ranAt: timestamp("ran_at").notNull().defaultNow(),
+}, (table) => [index("cron_runs_job_ran_at_idx").on(table.job, table.ranAt)]);

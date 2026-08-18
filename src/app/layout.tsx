@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { env } from "@/config/env";
 import { Inter } from "next/font/google";
 import { Analytics } from "@/components/Analytics";
 import "./globals.css";
@@ -10,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(env.appUrl()),
   title: {
     default: "Paraguay Residency Guide",
     template: "%s | Paraguay Residency Guide",

@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
+import { env } from "@/config/env";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { blogPosts } from "@/db/schema";
 
-const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
+const APP_URL = env.appUrl();
 
 const staticRoutes = ["", "/guide", "/pricing", "/blog", "/about", "/terms", "/privacy", "/refund-policy"];
 

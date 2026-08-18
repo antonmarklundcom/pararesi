@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { env, requireFeatureValue } from "@/config/env";
 
 export type EmailTemplate =
   | "welcome-set-password"
@@ -178,17 +179,16 @@ function renderTemplate(
 // Resend transport. Until RESEND_API_KEY is set, emails log to console so
 // auth/purchase flows are fully testable in dev without a provider account.
 export async function sendEmail({ to, template, data }: SendEmailArgs): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = env.resendApiKey();
 
   if (!apiKey) {
     console.log(`[email:${template}] to=${to}`, data);
     return;
   }
 
-  const from = process.env.EMAIL_FROM;
-  if (!from) {
-    throw new Error("EMAIL_FROM must be set when RESEND_API_KEY is set.");
-  }
+  // Throws with the variable name and where to get the value — a live key
+  // with no From header is a deploy mistake, not a runtime condition to absorb.
+  const from = requireFeatureValue("EMAIL_FROM");
 
   const resend = new Resend(apiKey);
   const { subject, html } = renderEmail(template, data);

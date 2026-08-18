@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { env } from "@/config/env";
 import { verifySignature, type LemonSqueezyPayload } from "@/lib/ls-webhook";
 import { processWebhook } from "@/lib/webhook/handlers";
 import { productionWebhookDeps } from "@/lib/webhook/deps";
@@ -7,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
-  const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
+  const secret = env.lemonSqueezyWebhookSecret();
   const signatureHeader = request.headers.get("x-signature");
 
   if (!secret || !verifySignature(rawBody, signatureHeader, secret)) {

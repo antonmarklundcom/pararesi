@@ -1,10 +1,13 @@
 import { and, inArray, isNotNull, isNull } from "drizzle-orm";
 import { db } from "@/db";
-import { leadEmails, leads } from "@/db/schema";
+import { cronRuns, leadEmails, leads } from "@/db/schema";
 import { appUrl, sendLeadEmail } from "@/lib/lead-email";
 import { selectNurtureSends, type NurtureLead, type NurtureStep } from "@/lib/nurture";
 
 export type NurtureRunResult = { eligible: number; sent: number; failed: number };
+
+/** `cron_runs.job` value for the nurture schedule. */
+export const NURTURE_JOB = "nurture";
 
 /**
  * Data the run needs, behind an interface so the send loop's ordering and
@@ -17,6 +20,12 @@ export interface NurtureRunDeps {
   listSentSteps(leadIds: number[]): Promise<Map<number, string[]>>;
   send(lead: NurtureLead, step: NurtureStep): Promise<void>;
   recordSent(leadId: number, stepKey: string): Promise<void>;
+  /**
+   * Records that a run happened, whatever it found. This is the liveness
+   * signal: without it, "the cron never fired" and "the cron fired and nothing
+   * was due" look identical from the admin panel.
+   */
+  recordRun(result: NurtureRunResult): Promise<void>;
   now(): Date;
 }
 
@@ -59,6 +68,10 @@ export const productionNurtureDeps: NurtureRunDeps = {
     await db.insert(leadEmails).values({ leadId, step: stepKey });
   },
 
+  async recordRun(result) {
+    await db.insert(cronRuns).values({ job: NURTURE_JOB, ...result });
+  },
+
   now: () => new Date(),
 };
 
@@ -93,5 +106,17 @@ export async function runNurtureBatch(
     }
   }
 
-  return { eligible: due.length, sent, failed };
+  const result = { eligible: due.length, sent, failed };
+
+  // Recorded outside the per-lead try/catch and after the loop, so the row
+  // reflects what the run actually achieved. A failure to record is logged
+  // rather than thrown: the emails are already sent, and losing the liveness
+  // row must not turn a good run into a 500 that invites a retry.
+  try {
+    await deps.recordRun(result);
+  } catch (error) {
+    console.error("[nurture] failed to record the run:", error);
+  }
+
+  return result;
 }
