@@ -48,7 +48,9 @@ export function toWebhookEventSummary(event: WebhookEventRecord): WebhookEventSu
 }
 
 /** Counts by status, for an at-a-glance banner on the admin dashboard. */
-export function countByStatus(events: WebhookEventSummary[]): Record<WebhookEventStatus, number> {
+export function countByStatus(
+  events: Pick<WebhookEventSummary, "status">[],
+): Record<WebhookEventStatus, number> {
   const counts: Record<WebhookEventStatus, number> = { processed: 0, failed: 0, pending: 0 };
   for (const event of events) counts[event.status] += 1;
   return counts;
