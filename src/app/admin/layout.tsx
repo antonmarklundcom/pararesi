@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { logoutAction } from "@/lib/logout-action";
 
 const links = [
+  { href: "/admin", label: "Dashboard" },
   { href: "/admin/modules", label: "Modules & Lessons" },
   { href: "/admin/resources", label: "Resources" },
   { href: "/admin/updates", label: "Updates" },

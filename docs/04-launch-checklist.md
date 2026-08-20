@@ -134,6 +134,11 @@ variant ids that were never swapped and a `test_mode` API key on a live domain.
 - [ ] `npx tsx scripts/preflight.ts --live` re-run after go-live, all green
 - [ ] Nurture cron confirmed live: `/admin/leads` shows a recent "last run / N sent"
       rather than "no run recorded yet"
+- [ ] `/admin` dashboard is clean on the live deployment: no "unfilled owner config"
+      panel, no failed or pending webhooks, no members stuck awaiting a password.
+      This is the daily check after launch — revenue, members, the lead funnel and
+      the two invisible failure modes (a dropped webhook, a cron that never fires)
+      are all on that one page.
 
 ## 5. Post-launch (backlog, not launch blockers)
 
